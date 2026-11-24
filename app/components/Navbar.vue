@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   LogIn,
   LogOut,
+  Menu,
   Search,
   Send,
   ShieldCheck,
@@ -35,6 +36,7 @@ const topSearch = ref(typeof route.query.q === 'string' ? route.query.q : '')
 const showNotifications = ref(false)
 const showSupportModal = ref(false)
 const showAccountMenu = ref(false)
+const showMobileMenu = ref(false)
 
 watch(
   () => route.query.q,
@@ -48,6 +50,7 @@ watch(
   () => {
     showNotifications.value = false
     showAccountMenu.value = false
+    showMobileMenu.value = false
   }
 )
 
@@ -69,7 +72,8 @@ const isExploreView = computed(() => route.path.startsWith('/trips') && route.qu
 const isHotelsView = computed(() => route.path.startsWith('/hotels'))
 const isCommunityView = computed(() => route.path.startsWith('/community'))
 const isMatchmakerView = computed(() => route.path.startsWith('/matchmaker'))
-const isCustomerView = computed(() => route.path.startsWith('/customer') || route.path.startsWith('/passport') || route.path.startsWith('/custom-trip'))
+const isCustomerView = computed(() => route.path.startsWith('/customer/dashboard') || route.path.startsWith('/customer/checkout') || route.path.startsWith('/customer/transactions') || route.path.startsWith('/customer/certificates'))
+const isPassportView = computed(() => route.path.startsWith('/customer/passport') || route.path.startsWith('/passport'))
 const isGuideView = computed(() => route.path.startsWith('/guide'))
 const isAdminView = computed(() => route.path.startsWith('/admin'))
 const isLoginView = computed(() => route.path === '/login' || route.path === '/register')
@@ -89,7 +93,7 @@ const pageHeading = computed(() => {
   if (isHome.value) {
     return {
       title: `Hello, ${firstName.value}`,
-      emoji: '👋',
+      emoji: '',
       subtitle: 'Marketplace Open Trip & Pemandu Lokal Terverifikasi di seluruh Nusantara.'
     }
   }
@@ -110,7 +114,7 @@ const pageHeading = computed(() => {
   if (isMatchmakerView.value) {
     return {
       title: 'Adventure Matchmaker',
-      emoji: '✨',
+      emoji: '',
       subtitle: 'Kuis AI untuk mencocokkan kebugaran fisik, anggaran, dan gaya petualangan Anda.'
     }
   }
@@ -158,14 +162,15 @@ const pageHeading = computed(() => {
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <!-- Greeting / Page Title -->
       <div class="flex items-start gap-3">
-        <!-- Mobile Brand Mark -->
-        <NuxtLink
-          to="/home"
-          class="lg:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#1f6f6d] text-white shadow-md"
-          aria-label="Beranda JejakNusa"
+        <!-- Mobile Menu Drawer Trigger -->
+        <button
+          type="button"
+          class="lg:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#1f6f6d] text-white shadow-md hover:bg-[#175957] transition cursor-pointer"
+          aria-label="Buka Menu Navigasi"
+          @click="showMobileMenu = true"
         >
-          <Compass class="h-6 w-6" />
-        </NuxtLink>
+          <Menu class="h-5 w-5" />
+        </button>
 
         <div>
           <h1 class="font-editorial text-2xl sm:text-4xl font-bold tracking-tight text-[#162221] leading-tight">
@@ -416,7 +421,242 @@ const pageHeading = computed(() => {
         </div>
       </div>
     </div>
+
+    <!-- Mobile Horizontal Quick-Navigation Rail (Same items as Desktop Left Rail!) -->
+    <nav
+      aria-label="Menu Cepat Mobile"
+      class="lg:hidden mt-4 -mx-1 px-1 flex items-center gap-2 overflow-x-auto pb-1.5 rail-scroll"
+    >
+      <NuxtLink
+        to="/home"
+        class="shrink-0 flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[18px] px-3 py-2 text-[11px] font-semibold transition-all"
+        :class="isHome ? 'bg-[#1f6f6d] text-white shadow-md shadow-[#1f6f6d]/25' : 'glass-pill text-[#455351]'"
+      >
+        <Home class="h-4 w-4" />
+        <span>Home</span>
+      </NuxtLink>
+
+      <NuxtLink
+        to="/trips"
+        class="shrink-0 flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[18px] px-3 py-2 text-[11px] font-semibold transition-all"
+        :class="isExploreView ? 'bg-[#1f6f6d] text-white shadow-md shadow-[#1f6f6d]/25' : 'glass-pill text-[#455351]'"
+      >
+        <Compass class="h-4 w-4" />
+        <span>Explore</span>
+      </NuxtLink>
+
+      <NuxtLink
+        to="/hotels"
+        class="shrink-0 flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[18px] px-3 py-2 text-[11px] font-semibold transition-all"
+        :class="isHotelsView ? 'bg-[#1f6f6d] text-white shadow-md shadow-[#1f6f6d]/25' : 'glass-pill text-[#455351]'"
+      >
+        <BedDouble class="h-4 w-4" />
+        <span>Hotels</span>
+      </NuxtLink>
+
+      <NuxtLink
+        to="/matchmaker"
+        class="shrink-0 flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[18px] px-3 py-2 text-[11px] font-semibold transition-all"
+        :class="isMatchmakerView ? 'bg-[#1f6f6d] text-white shadow-md shadow-[#1f6f6d]/25' : 'glass-pill text-[#455351]'"
+      >
+        <Wand2 class="h-4 w-4" />
+        <span>Quiz AI</span>
+      </NuxtLink>
+
+      <NuxtLink
+        v-if="isAuthenticated"
+        :to="getRoleHomePath(user?.role)"
+        class="shrink-0 flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[18px] px-3 py-2 text-[11px] font-semibold transition-all"
+        :class="isCustomerView || isAdminView ? 'bg-[#1f6f6d] text-white shadow-md shadow-[#1f6f6d]/25' : 'glass-pill text-[#1f6f6d]'"
+      >
+        <LayoutDashboard class="h-4 w-4" />
+        <span>{{ isAdmin ? 'Admin' : 'My Trip' }}</span>
+      </NuxtLink>
+
+      <NuxtLink
+        v-if="!isAuthenticated || isCustomer"
+        to="/customer/passport"
+        class="shrink-0 flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[18px] px-3 py-2 text-[11px] font-semibold transition-all"
+        :class="isPassportView ? 'bg-[#1f6f6d] text-white shadow-md shadow-[#1f6f6d]/25' : 'glass-pill text-[#455351]'"
+      >
+        <Award class="h-4 w-4" />
+        <span>Passport</span>
+      </NuxtLink>
+
+      <NuxtLink
+        to="/community"
+        class="shrink-0 flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[18px] px-3 py-2 text-[11px] font-semibold transition-all"
+        :class="isCommunityView ? 'bg-[#1f6f6d] text-white shadow-md shadow-[#1f6f6d]/25' : 'glass-pill text-[#455351]'"
+      >
+        <Users class="h-4 w-4" />
+        <span>Buddy</span>
+      </NuxtLink>
+
+      <NuxtLink
+        to="/trips?saved=true"
+        class="shrink-0 relative flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[18px] px-3 py-2 text-[11px] font-semibold transition-all"
+        :class="isSavedView ? 'bg-[#1f6f6d] text-white shadow-md shadow-[#1f6f6d]/25' : 'glass-pill text-[#455351]'"
+      >
+        <Heart class="h-4 w-4" />
+        <span>Saved</span>
+        <span
+          v-if="savedIds.length"
+          class="absolute top-1 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold"
+          :class="isSavedView ? 'bg-amber-400 text-[#103f3e]' : 'bg-[#1f6f6d] text-white'"
+        >
+          {{ savedIds.length }}
+        </span>
+      </NuxtLink>
+
+      <button
+        type="button"
+        class="shrink-0 flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[18px] bg-[#1f6f6d] px-3 py-2 text-[11px] font-semibold text-white shadow-md shadow-[#1f6f6d]/25 cursor-pointer"
+        @click="showSupportModal = true"
+      >
+        <Headphones class="h-4 w-4" />
+        <span>Support</span>
+      </button>
+    </nav>
   </header>
+
+  <!-- Mobile Slide-Out Navigation Drawer -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="showMobileMenu"
+        class="fixed inset-0 z-50 lg:hidden flex"
+      >
+        <div class="fixed inset-0 bg-[#0d2423]/55 backdrop-blur-xs" @click="showMobileMenu = false" />
+        <aside class="relative z-10 w-72 max-w-[84vw] h-full bg-[#103f3e] text-white flex flex-col shadow-2xl">
+          <div class="p-5 flex items-center justify-between border-b border-white/10">
+            <NuxtLink to="/home" class="flex items-center gap-2.5" @click="showMobileMenu = false">
+              <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 text-amber-300">
+                <Compass class="h-5 w-5" />
+              </span>
+              <span class="font-editorial text-xl font-bold text-white">JejakNusa</span>
+            </NuxtLink>
+            <button
+              type="button"
+              class="rounded-full p-1.5 text-teal-100 hover:bg-white/10 cursor-pointer"
+              aria-label="Tutup Menu"
+              @click="showMobileMenu = false"
+            >
+              <X class="h-5 w-5" />
+            </button>
+          </div>
+
+          <nav class="flex-1 overflow-y-auto p-4 space-y-1.5 rail-scroll">
+            <NuxtLink
+              to="/home"
+              class="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-extrabold transition"
+              :class="isHome ? 'bg-white text-[#103f3e]' : 'text-teal-100 hover:bg-white/10'"
+            >
+              <Home class="h-4.5 w-4.5" />
+              <span>Home</span>
+            </NuxtLink>
+            <NuxtLink
+              to="/trips"
+              class="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-extrabold transition"
+              :class="isExploreView ? 'bg-white text-[#103f3e]' : 'text-teal-100 hover:bg-white/10'"
+            >
+              <Compass class="h-4.5 w-4.5" />
+              <span>Explore Open Trip</span>
+            </NuxtLink>
+            <NuxtLink
+              to="/hotels"
+              class="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-extrabold transition"
+              :class="isHotelsView ? 'bg-white text-[#103f3e]' : 'text-teal-100 hover:bg-white/10'"
+            >
+              <BedDouble class="h-4.5 w-4.5" />
+              <span>Hotels &amp; Penginapan</span>
+            </NuxtLink>
+            <NuxtLink
+              to="/matchmaker"
+              class="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-extrabold transition"
+              :class="isMatchmakerView ? 'bg-white text-[#103f3e]' : 'text-teal-100 hover:bg-white/10'"
+            >
+              <Wand2 class="h-4.5 w-4.5" />
+              <span>Quiz AI Matchmaker</span>
+            </NuxtLink>
+            <NuxtLink
+              v-if="isAuthenticated"
+              :to="getRoleHomePath(user?.role)"
+              class="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-extrabold transition"
+              :class="isCustomerView || isAdminView ? 'bg-white text-[#103f3e]' : 'text-teal-100 hover:bg-white/10'"
+            >
+              <LayoutDashboard class="h-4.5 w-4.5" />
+              <span>{{ isAdmin ? 'Admin Command Center' : 'My Trip (Dashboard)' }}</span>
+            </NuxtLink>
+            <NuxtLink
+              v-if="!isAuthenticated || isCustomer"
+              to="/customer/passport"
+              class="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-extrabold transition"
+              :class="isPassportView ? 'bg-white text-[#103f3e]' : 'text-teal-100 hover:bg-white/10'"
+            >
+              <Award class="h-4.5 w-4.5" />
+              <span>Adventure Passport</span>
+            </NuxtLink>
+            <NuxtLink
+              to="/community"
+              class="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-extrabold transition"
+              :class="isCommunityView ? 'bg-white text-[#103f3e]' : 'text-teal-100 hover:bg-white/10'"
+            >
+              <Users class="h-4.5 w-4.5" />
+              <span>Buddy &amp; Komunitas</span>
+            </NuxtLink>
+            <NuxtLink
+              to="/trips?saved=true"
+              class="flex items-center justify-between gap-3 rounded-2xl px-3.5 py-3 text-xs font-extrabold transition"
+              :class="isSavedView ? 'bg-white text-[#103f3e]' : 'text-teal-100 hover:bg-white/10'"
+            >
+              <span class="flex items-center gap-3">
+                <Heart class="h-4.5 w-4.5" />
+                <span>Saved Trip</span>
+              </span>
+              <span v-if="savedIds.length" class="rounded-full bg-amber-300 px-2 py-0.5 text-[10px] font-extrabold text-[#103f3e]">
+                {{ savedIds.length }}
+              </span>
+            </NuxtLink>
+            <NuxtLink
+              to="/login"
+              class="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-extrabold transition"
+              :class="isLoginView ? 'bg-white text-[#103f3e]' : 'text-teal-100 hover:bg-white/10'"
+            >
+              <User class="h-4.5 w-4.5" />
+              <span>{{ isAuthenticated ? 'Akun Saya' : 'Login' }}</span>
+            </NuxtLink>
+          </nav>
+
+          <div class="p-4 border-t border-white/10 space-y-2">
+            <button
+              type="button"
+              class="w-full flex items-center justify-center gap-2 rounded-2xl bg-white/15 hover:bg-white/25 px-4 py-2.5 text-xs font-extrabold text-white transition cursor-pointer"
+              @click="showMobileMenu = false; showSupportModal = true"
+            >
+              <Headphones class="h-4 w-4" />
+              Support &amp; Keamanan
+            </button>
+            <button
+              v-if="isAuthenticated"
+              type="button"
+              class="w-full flex items-center justify-center gap-2 rounded-2xl bg-orange-500 hover:bg-orange-600 px-4 py-2.5 text-xs font-extrabold text-white transition cursor-pointer"
+              @click="handleLogout"
+            >
+              <LogOut class="h-4 w-4" />
+              Logout / Ganti Akun
+            </button>
+          </div>
+        </aside>
+      </div>
+    </Transition>
+  </Teleport>
 
   <!-- Desktop Left Floating Pill Rail (Role-Aware Dynamic Items) -->
   <aside
@@ -446,7 +686,7 @@ const pageHeading = computed(() => {
     </NuxtLink>
 
     <!-- Scrollable Menu -->
-    <div class="flex-1 min-h-0 w-full overflow-y-auto overscroll-contain rail-scroll flex flex-col items-center gap-2.5 py-1 px-1">
+    <div class="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden overscroll-contain rail-scroll flex flex-col items-center gap-2.5 py-1 px-1">
       <NuxtLink
         to="/home"
         class="shrink-0 flex w-[72px] flex-col items-center justify-center gap-1 rounded-[20px] py-2.5 text-[11px] font-semibold transition-all"
@@ -502,7 +742,8 @@ const pageHeading = computed(() => {
       <template v-if="!isAuthenticated || isCustomer">
         <NuxtLink
           to="/customer/passport"
-          class="shrink-0 flex w-[72px] flex-col items-center justify-center gap-1 rounded-[20px] py-2.5 text-[11px] font-semibold transition-all glass-pill text-[#455351] hover:text-[#1f6f6d] hover:bg-white"
+          class="shrink-0 flex w-[72px] flex-col items-center justify-center gap-1 rounded-[20px] py-2.5 text-[11px] font-semibold transition-all"
+          :class="isPassportView ? 'bg-[#1f6f6d] text-white shadow-lg shadow-[#1f6f6d]/30' : 'glass-pill text-[#455351] hover:text-[#1f6f6d] hover:bg-white'"
         >
           <Award class="h-4.5 w-4.5" />
           <span>Passport</span>
