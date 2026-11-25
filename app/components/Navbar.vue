@@ -968,11 +968,12 @@ const pageHeading = computed(() => {
               Tutup
             </button>
             <NuxtLink
-              to="/login"
-              class="rounded-full bg-[#1f6f6d] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#175957] transition"
+              :to="isAdmin ? '/admin/messages' : '/customer/support'"
+              class="inline-flex items-center gap-1.5 rounded-full bg-[#1f6f6d] px-5 py-2.5 text-xs font-extrabold text-white hover:bg-[#175957] transition shadow-sm"
               @click="showSupportModal = false"
             >
-              Coba Demo Multi-Role
+              <Headphones class="h-3.5 w-3.5" />
+              {{ isAdmin ? 'Buka Inbox Pesan Pelanggan' : 'Hubungi Admin Sekarang' }}
             </NuxtLink>
           </div>
         </div>

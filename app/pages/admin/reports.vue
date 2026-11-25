@@ -10,6 +10,7 @@ import {
   FileSpreadsheet,
   FileText,
   Filter,
+  Phone,
   RefreshCw,
   RotateCcw,
   Search,
@@ -70,7 +71,7 @@ const filteredActivities = computed(() => {
     if (dateFrom.value && item.dateOnly < dateFrom.value) return false
     if (dateTo.value && item.dateOnly > dateTo.value) return false
     if (q) {
-      const hay = `${item.title} ${item.actor} ${item.actorContact} ${item.referenceCode} ${item.description} ${item.status} ${item.categoryLabel}`.toLowerCase()
+      const hay = `${item.title} ${item.actor} ${item.actorPhone} ${item.actorContact} ${item.referenceCode} ${item.description} ${item.status} ${item.categoryLabel}`.toLowerCase()
       if (!hay.includes(q)) return false
     }
     return true
@@ -350,7 +351,7 @@ function handleExportPdf() {
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Cari pelaku, invoice, judul aktivitas, status..."
+              placeholder="Cari pelaku, no. telepon, invoice, aktivitas, status..."
               class="w-full rounded-full border border-[#e3dccd] bg-[#fbf9f5] pl-10 pr-4 py-2 text-xs sm:text-sm text-[#162221] focus:border-[#1f6f6d] focus:outline-none"
             >
           </div>
@@ -448,6 +449,7 @@ function handleExportPdf() {
                 <th class="px-4 py-3.5 font-extrabold">Kategori</th>
                 <th class="px-4 py-3.5 font-extrabold">Aktivitas &amp; Rincian</th>
                 <th class="px-4 py-3.5 font-extrabold">Pelaku / Akun</th>
+                <th class="px-4 py-3.5 font-extrabold">No. Telepon / WA</th>
                 <th class="px-4 py-3.5 font-extrabold">Referensi</th>
                 <th class="px-4 py-3.5 font-extrabold text-right">Nominal</th>
                 <th class="px-4 py-3.5 font-extrabold">Status</th>
@@ -483,6 +485,17 @@ function handleExportPdf() {
                 <td class="px-4 py-3.5">
                   <p class="font-bold text-[#162221]">{{ item.actor }}</p>
                   <p class="text-[10px] text-[#5c6b69] max-w-[200px] truncate">{{ item.actorContact }}</p>
+                </td>
+
+                <td class="px-4 py-3.5 whitespace-nowrap">
+                  <span
+                    v-if="item.actorPhone && item.actorPhone !== '-'"
+                    class="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-[#162221]"
+                  >
+                    <Phone class="h-3 w-3 text-[#1f6f6d] shrink-0" />
+                    {{ item.actorPhone }}
+                  </span>
+                  <span v-else class="text-[11px] text-[#8a9694]">—</span>
                 </td>
 
                 <td class="px-4 py-3.5 whitespace-nowrap">
@@ -553,7 +566,11 @@ function handleExportPdf() {
                 <strong class="text-[#162221] text-right">{{ selectedItem.actor }}</strong>
               </div>
               <div class="flex justify-between gap-3">
-                <span class="text-[#5c6b69]">Kontak / Info</span>
+                <span class="text-[#5c6b69]">No. Telepon / WA</span>
+                <strong class="font-mono text-[#162221] text-right">{{ selectedItem.actorPhone || '-' }}</strong>
+              </div>
+              <div class="flex justify-between gap-3">
+                <span class="text-[#5c6b69]">Email / Info Akun</span>
                 <span class="text-[#354442] text-right">{{ selectedItem.actorContact }}</span>
               </div>
               <div class="flex justify-between gap-3">
@@ -657,7 +674,8 @@ function handleExportPdf() {
             <th class="border border-[#103f3e] px-2 py-1.5 text-left">Waktu</th>
             <th class="border border-[#103f3e] px-2 py-1.5 text-left">Kategori</th>
             <th class="border border-[#103f3e] px-2 py-1.5 text-left">Aktivitas &amp; Rincian</th>
-            <th class="border border-[#103f3e] px-2 py-1.5 text-left">Pelaku / Kontak</th>
+            <th class="border border-[#103f3e] px-2 py-1.5 text-left">Pelaku / Info</th>
+            <th class="border border-[#103f3e] px-2 py-1.5 text-left">No. Telepon</th>
             <th class="border border-[#103f3e] px-2 py-1.5 text-left">Referensi</th>
             <th class="border border-[#103f3e] px-2 py-1.5 text-right">Nominal (Rp)</th>
             <th class="border border-[#103f3e] px-2 py-1.5 text-left">Status</th>
@@ -676,6 +694,7 @@ function handleExportPdf() {
               <p class="font-bold">{{ item.actor }}</p>
               <p class="text-[#5c6b69]">{{ item.actorContact }}</p>
             </td>
+            <td class="border border-[#d9d2c5] px-2 py-1.5 align-top font-mono whitespace-nowrap">{{ item.actorPhone || '-' }}</td>
             <td class="border border-[#d9d2c5] px-2 py-1.5 align-top font-mono whitespace-nowrap">{{ item.referenceCode }}</td>
             <td class="border border-[#d9d2c5] px-2 py-1.5 align-top text-right font-bold whitespace-nowrap">
               {{ item.amount !== null ? formatRupiah(item.amount) : '—' }}
@@ -685,7 +704,7 @@ function handleExportPdf() {
         </tbody>
         <tfoot>
           <tr class="bg-[#eef7f6] font-extrabold">
-            <td colspan="6" class="border border-[#103f3e] px-2 py-2 text-right text-[#103f3e]">
+            <td colspan="7" class="border border-[#103f3e] px-2 py-2 text-right text-[#103f3e]">
               TOTAL NOMINAL TERCATAT ({{ filteredActivities.length }} AKTIVITAS)
             </td>
             <td class="border border-[#103f3e] px-2 py-2 text-right text-[#103f3e] whitespace-nowrap">

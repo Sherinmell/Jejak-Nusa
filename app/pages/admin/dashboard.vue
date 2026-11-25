@@ -3,13 +3,9 @@ import {
   Activity,
   AlertTriangle,
   CheckCircle2,
-  ClipboardList,
   Compass,
-  FileBarChart2,
   MapPin,
   Radio,
-  ShieldCheck,
-  Sliders,
   TrendingUp,
   Users,
   Wallet
@@ -83,10 +79,10 @@ async function resolveSos(id: string) {
 <template>
   <div class="space-y-6">
     <!-- Command Center Hero -->
-    <div class="rounded-[28px] teal-card p-6 sm:p-7 text-white flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-      <div class="space-y-1.5">
+    <div class="rounded-[28px] teal-card p-6 sm:p-7 text-white">
+      <div class="space-y-1.5 min-w-0">
         <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-300/20 border border-amber-300/35 px-3 py-1 text-[11px] font-extrabold text-amber-200">
-          <Activity class="h-3.5 w-3.5" />
+          <Activity class="h-3.5 w-3.5 shrink-0" />
           Admin Command Center &amp; Real-Time Monitoring
         </span>
         <h1 class="font-editorial text-2xl sm:text-3xl font-bold">
@@ -95,37 +91,6 @@ async function resolveSos(id: string) {
         <p class="text-xs sm:text-sm text-teal-100/90 max-w-2xl">
           Pantau destinasi yang sedang dipilih pelanggan secara real-time, verifikasi transaksi QRIS, kelola toggle fitur platform, dan awasi sinyal darurat SOS.
         </p>
-      </div>
-
-      <div class="flex flex-wrap gap-2 shrink-0">
-        <NuxtLink
-          to="/admin/reports"
-          class="inline-flex items-center gap-1.5 rounded-full bg-amber-400 px-4 py-2.5 text-xs font-extrabold text-[#162221] hover:bg-amber-300 transition shadow-sm"
-        >
-          <FileBarChart2 class="h-4 w-4" />
-          Laporan Aktivitas (PDF/Excel)
-        </NuxtLink>
-        <NuxtLink
-          to="/admin/bookings"
-          class="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2.5 text-xs font-extrabold text-[#103f3e] hover:bg-amber-50 transition"
-        >
-          <ClipboardList class="h-4 w-4" />
-          Semua Transaksi ({{ metrics?.totalTransactions || 0 }})
-        </NuxtLink>
-        <NuxtLink
-          to="/admin/features"
-          class="inline-flex items-center gap-1.5 rounded-full bg-white/15 border border-white/25 px-4 py-2.5 text-xs font-extrabold text-white hover:bg-white/25 transition"
-        >
-          <Sliders class="h-4 w-4" />
-          Manajemen Fitur
-        </NuxtLink>
-        <NuxtLink
-          to="/admin/verifications"
-          class="inline-flex items-center gap-1.5 rounded-full bg-white/15 border border-white/25 px-4 py-2.5 text-xs font-extrabold text-white hover:bg-white/25 transition"
-        >
-          <ShieldCheck class="h-4 w-4" />
-          Verifikasi ({{ metrics?.pendingVerifications || 0 }})
-        </NuxtLink>
       </div>
     </div>
 

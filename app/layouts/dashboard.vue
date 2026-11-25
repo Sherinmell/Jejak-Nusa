@@ -7,10 +7,13 @@ import {
   Compass,
   Database,
   FileBarChart2,
+  Headphones,
   Home,
+  Landmark,
   LayoutDashboard,
   LogOut,
   Menu,
+  MessageSquare,
   PlusCircle,
   ShieldAlert,
   ShieldCheck,
@@ -38,7 +41,7 @@ interface NavItem {
   label: string
   to: string
   description: string
-  icon: 'dashboard' | 'passport' | 'customers' | 'trips' | 'create' | 'bookings' | 'reports' | 'features' | 'verify' | 'payouts' | 'crud' | 'profile'
+  icon: 'dashboard' | 'passport' | 'customers' | 'trips' | 'create' | 'bookings' | 'reports' | 'finance' | 'messages' | 'support' | 'features' | 'verify' | 'payouts' | 'crud' | 'profile'
 }
 
 const navItems = computed<NavItem[]>(() => {
@@ -52,10 +55,22 @@ const navItems = computed<NavItem[]>(() => {
         icon: 'dashboard'
       },
       {
+        label: 'Pesan Pelanggan',
+        to: '/admin/messages',
+        description: 'Balas pertanyaan pelanggan',
+        icon: 'messages'
+      },
+      {
         label: 'Laporan Aktivitas',
         to: '/admin/reports',
         description: 'Rekap masuk, Ekspor PDF/Excel',
         icon: 'reports'
+      },
+      {
+        label: 'Laporan Keuangan',
+        to: '/admin/finance-report',
+        description: 'Arus kas, Komisi, PDF/Excel',
+        icon: 'finance'
       },
       {
         label: 'Transaksi & Booking',
@@ -135,6 +150,12 @@ const navItems = computed<NavItem[]>(() => {
       to: '/customer/passport',
       description: 'Badges, poin & peta jejak',
       icon: 'passport'
+    },
+    {
+      label: 'Hubungi Admin',
+      to: '/customer/support',
+      description: 'Kirim pesan & bantuan cepat',
+      icon: 'support'
     },
     {
       label: 'Edit Profil Saya',
@@ -228,6 +249,9 @@ async function handleLogout() {
           <UserCheck v-else-if="item.icon === 'customers'" class="h-4.5 w-4.5 shrink-0" />
           <ClipboardList v-else-if="item.icon === 'bookings'" class="h-4.5 w-4.5 shrink-0" />
           <FileBarChart2 v-else-if="item.icon === 'reports'" class="h-4.5 w-4.5 shrink-0" />
+          <Landmark v-else-if="item.icon === 'finance'" class="h-4.5 w-4.5 shrink-0" />
+          <MessageSquare v-else-if="item.icon === 'messages'" class="h-4.5 w-4.5 shrink-0" />
+          <Headphones v-else-if="item.icon === 'support'" class="h-4.5 w-4.5 shrink-0" />
           <Sliders v-else-if="item.icon === 'features'" class="h-4.5 w-4.5 shrink-0" />
           <Briefcase v-else-if="item.icon === 'trips'" class="h-4.5 w-4.5 shrink-0" />
           <PlusCircle v-else-if="item.icon === 'create'" class="h-4.5 w-4.5 shrink-0" />

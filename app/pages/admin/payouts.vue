@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   CloudLightning,
   Coins,
+  FileSpreadsheet,
   Send,
   Wallet,
   XCircle
@@ -74,17 +75,27 @@ async function resolveRefund(refund: WeatherRefundRecord, action: 'approve' | 'r
 
 <template>
   <div class="space-y-6">
-    <div>
-      <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[#1f6f6d]">
-        <Wallet class="h-4 w-4" />
-        Escrow &amp; Manajemen Keuangan
-      </span>
-      <h1 class="font-editorial text-2xl sm:text-3xl font-bold text-[#162221]">
-        Komisi Platform, Payout Pemandu &amp; Refund Cuaca
-      </h1>
-      <p class="text-xs sm:text-sm text-[#5c6b69]">
-        Cairkan dana bersih ke pemandu setelah trip selesai (dipotong komisi 10%) serta proses klaim Garansi Cuaca Ekstrem.
-      </p>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[#1f6f6d]">
+          <Wallet class="h-4 w-4" />
+          Escrow &amp; Manajemen Keuangan
+        </span>
+        <h1 class="font-editorial text-2xl sm:text-3xl font-bold text-[#162221]">
+          Komisi Platform, Payout Pemandu &amp; Refund Cuaca
+        </h1>
+        <p class="text-xs sm:text-sm text-[#5c6b69]">
+          Cairkan dana bersih ke pemandu setelah trip selesai (dipotong komisi 10%) serta proses klaim Garansi Cuaca Ekstrem.
+        </p>
+      </div>
+
+      <NuxtLink
+        to="/admin/finance-report"
+        class="inline-flex items-center gap-1.5 rounded-full bg-[#103f3e] px-4 py-2.5 text-xs font-extrabold text-white hover:bg-[#175957] transition shadow-xs self-start sm:self-auto shrink-0"
+      >
+        <FileSpreadsheet class="h-4 w-4 text-emerald-300" />
+        Buka Laporan Keuangan (PDF / Excel)
+      </NuxtLink>
     </div>
 
     <!-- Financial Summary Cards -->

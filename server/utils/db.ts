@@ -8,6 +8,7 @@ import { guideBookingsStore, guideManagedTripsStore } from './guidePortalStore'
 import { customTripsStore } from './customTripStore'
 import { passportStateStore } from './passportStore'
 import { customerBookingsStore, platformFeaturesStore } from './platformStore'
+import { supportThreadsStore } from './supportStore'
 import { GEAR_ADDONS } from '#shared/types/adventure'
 
 const FORBIDDEN_SYSTEM_DATABASES = new Set([
@@ -332,6 +333,21 @@ async function runSchemaAndSeed(): Promise<void> {
       certificate_holder_name VARCHAR(160) DEFAULT NULL,
       completed_at VARCHAR(40) DEFAULT NULL,
       created_at VARCHAR(40) NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS support_threads (
+      id VARCHAR(80) PRIMARY KEY,
+      ticket_code VARCHAR(40) NOT NULL UNIQUE,
+      customer_id VARCHAR(80) NOT NULL,
+      customer_name VARCHAR(160) NOT NULL,
+      customer_email VARCHAR(160) NOT NULL,
+      customer_phone VARCHAR(60) NOT NULL,
+      category VARCHAR(60) NOT NULL,
+      subject VARCHAR(220) NOT NULL,
+      booking_reference VARCHAR(80) DEFAULT NULL,
+      status VARCHAR(40) NOT NULL DEFAULT 'Menunggu Balasan',
+      messages_json LONGTEXT NOT NULL,
+      created_at VARCHAR(40) NOT NULL,
+      updated_at VARCHAR(40) NOT NULL
     )`
   ]
 
@@ -720,6 +736,33 @@ async function runSchemaAndSeed(): Promise<void> {
           cbk.certificateHolderName || null,
           cbk.completedAt || null,
           cbk.createdAt
+        ]
+      )
+    }
+  }
+
+  const [supCountRows] = await pool.query<RowDataPacket[]>('SELECT COUNT(*) AS cnt FROM support_threads')
+  if (Number(supCountRows[0]?.cnt || 0) === 0) {
+    for (const thread of supportThreadsStore) {
+      await pool.execute(
+        `INSERT IGNORE INTO support_threads
+          (id, ticket_code, customer_id, customer_name, customer_email, customer_phone,
+           category, subject, booking_reference, status, messages_json, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          thread.id,
+          thread.ticketCode,
+          thread.customerId,
+          thread.customerName,
+          thread.customerEmail,
+          thread.customerPhone,
+          thread.category,
+          thread.subject,
+          thread.bookingReference || null,
+          thread.status,
+          JSON.stringify(thread.messages),
+          thread.createdAt,
+          thread.updatedAt
         ]
       )
     }

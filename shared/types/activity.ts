@@ -17,6 +17,7 @@ export interface AdminActivityItem {
   categoryLabel: string
   title: string
   actor: string
+  actorPhone: string
   actorContact: string
   referenceCode: string
   description: string

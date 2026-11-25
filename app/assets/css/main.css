@@ -80,6 +80,15 @@ input[type="range"].adventure-range {
   background: rgba(31, 111, 109, 0.48);
 }
 
+/* Hide scrollbar while keeping smooth horizontal swipe/drag scrolling */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Clean Official Receipt Print Styling */
 @media print {
   @page {

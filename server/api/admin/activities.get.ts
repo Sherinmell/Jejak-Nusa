@@ -19,6 +19,7 @@ import {
   tripLobbyMessagesStore,
   weatherRefundsStore
 } from '../../utils/platformStore'
+import { listSupportThreads } from '../../utils/supportStore'
 import { requireAdmin } from '../../utils/requireAdmin'
 
 interface DbUserRow extends RowDataPacket {
@@ -135,6 +136,54 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
 
   const activities: AdminActivityItem[] = []
 
+  // Build phone lookup directory (by lowercased name & email) from authStore, TiDB users, and bookings
+  const phoneByName = new Map<string, string>()
+  const phoneByEmail = new Map<string, string>()
+  function registerPhone(name?: string | null, email?: string | null, phone?: string | null) {
+    const cleanPhone = (phone || '').trim()
+    if (!cleanPhone) return
+    if (name && name.trim()) phoneByName.set(name.trim().toLowerCase(), cleanPhone)
+    if (email && email.trim()) phoneByEmail.set(email.trim().toLowerCase(), cleanPhone)
+  }
+  function resolvePhone(directPhone?: string | null, name?: string | null, email?: string | null): string {
+    const clean = (directPhone || '').trim()
+    if (clean) return clean
+    if (email && email.trim()) {
+      const byEmail = phoneByEmail.get(email.trim().toLowerCase())
+      if (byEmail) return byEmail
+    }
+    if (name && name.trim()) {
+      const key = name.trim().toLowerCase()
+      const exact = phoneByName.get(key)
+      if (exact) return exact
+      // Handle names like "Fajar Hidayat (+3 teman)" by stripping parenthetical suffix
+      const base = key.replace(/\s*\([^)]*\)\s*$/, '').trim()
+      const byBase = phoneByName.get(base)
+      if (byBase) return byBase
+    }
+    return '-'
+  }
+
+  for (const u of getAllStoredUsers()) {
+    registerPhone(u.name, u.email, u.phone)
+  }
+  for (const bk of customerBookingsStore) {
+    registerPhone(bk.leaderName, bk.customerEmail, bk.customerPhone)
+  }
+
+  // Pre-fetch TiDB users once so we can enrich phone directory AND list registrations
+  let dbUsers: DbUserRow[] = []
+  try {
+    dbUsers = await queryRows<DbUserRow>(
+      'SELECT id, username, name, email, phone, role, origin, member_since, verified, created_at FROM users ORDER BY created_at DESC LIMIT 200'
+    )
+    for (const u of dbUsers) {
+      registerPhone(u.name, u.email, u.phone)
+    }
+  } catch {
+    dbUsers = []
+  }
+
   // 1. Transaksi & Booking Masuk (runtime store + TiDB customer_bookings deduplicated)
   const seenInvoices = new Set<string>()
   let totalBookings = 0
@@ -163,7 +212,8 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
       categoryLabel: 'Transaksi Booking',
       title: `${typeLabel}: ${bk.tripTitle}`,
       actor: bk.leaderName,
-      actorContact: `${bk.customerPhone} • ${bk.customerEmail}`,
+      actorPhone: resolvePhone(bk.customerPhone, bk.leaderName, bk.customerEmail),
+      actorContact: bk.customerEmail,
       referenceCode: bk.invoiceNumber,
       description: `${bk.participantsCount} peserta • ${bk.location} • Berangkat ${bk.departureDate} • ${bk.paymentMethod} (${bk.bookingStatus})${certNote}`,
       amount: bk.totalAmount,
@@ -181,6 +231,7 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
       'SELECT * FROM customer_bookings ORDER BY created_at DESC LIMIT 200'
     )
     for (const row of dbBookings) {
+      registerPhone(row.leader_name, row.customer_email, row.customer_phone)
       if (seenInvoices.has(row.invoice_number)) continue
       seenInvoices.add(row.invoice_number)
       totalBookings += 1
@@ -202,7 +253,8 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
         categoryLabel: 'Transaksi Booking',
         title: `${typeLabel}: ${row.trip_title}`,
         actor: row.leader_name,
-        actorContact: `${row.customer_phone} • ${row.customer_email}`,
+        actorPhone: resolvePhone(row.customer_phone, row.leader_name, row.customer_email),
+        actorContact: row.customer_email,
         referenceCode: row.invoice_number,
         description: `${row.participants_count} peserta • ${row.location} • Berangkat ${row.departure_date} • ${row.payment_method} (${row.booking_status})${certNote}`,
         amount: Number(row.total_amount || 0),
@@ -222,41 +274,35 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
   const seenEmails = new Set<string>()
   let totalRegistrations = 0
 
-  try {
-    const dbUsers = await queryRows<DbUserRow>(
-      'SELECT id, username, name, email, phone, role, origin, member_since, verified, created_at FROM users ORDER BY created_at DESC LIMIT 200'
-    )
-    for (const u of dbUsers) {
-      const emailKey = (u.email || '').trim().toLowerCase()
-      if (!emailKey || seenEmails.has(emailKey)) continue
-      const role = normalizeUserRole(u.role)
-      if (role === 'admin') continue
-      seenEmails.add(emailKey)
-      totalRegistrations += 1
+  for (const u of dbUsers) {
+    const emailKey = (u.email || '').trim().toLowerCase()
+    if (!emailKey || seenEmails.has(emailKey)) continue
+    const role = normalizeUserRole(u.role)
+    if (role === 'admin') continue
+    seenEmails.add(emailKey)
+    totalRegistrations += 1
 
-      const dt = parseDateSafe(u.created_at || u.member_since)
-      const roleLabel = role === 'guide' ? 'Pemandu' : 'Peserta'
+    const dt = parseDateSafe(u.created_at || u.member_since)
+    const roleLabel = role === 'guide' ? 'Pemandu' : 'Peserta'
 
-      activities.push({
-        id: `act-usr-${u.id}`,
-        category: 'registration',
-        categoryLabel: 'Pendaftaran Akun',
-        title: `Akun ${roleLabel} Terdaftar: ${u.name}`,
-        actor: u.name,
-        actorContact: [u.username ? `@${u.username}` : null, u.email, u.phone].filter(Boolean).join(' • '),
-        referenceCode: u.id,
-        description: `Asal: ${u.origin || 'Indonesia'} • Bergabung sejak ${u.member_since || dt.dateOnly}`,
-        amount: null,
-        status: u.verified ? 'Terverifikasi' : 'Menunggu Verifikasi',
-        severity: u.verified ? 'success' : 'warning',
-        timestamp: dt.timestamp,
-        dateOnly: dt.dateOnly,
-        sortTime: dt.sortTime,
-        detailLink: '/admin/crud'
-      })
-    }
-  } catch {
-    // Fallback to authStore below
+    activities.push({
+      id: `act-usr-${u.id}`,
+      category: 'registration',
+      categoryLabel: 'Pendaftaran Akun',
+      title: `Akun ${roleLabel} Terdaftar: ${u.name}`,
+      actor: u.name,
+      actorPhone: resolvePhone(u.phone, u.name, u.email),
+      actorContact: [u.username ? `@${u.username}` : null, u.email].filter(Boolean).join(' • '),
+      referenceCode: u.id,
+      description: `Asal: ${u.origin || 'Indonesia'} • Bergabung sejak ${u.member_since || dt.dateOnly}`,
+      amount: null,
+      status: u.verified ? 'Terverifikasi' : 'Menunggu Verifikasi',
+      severity: u.verified ? 'success' : 'warning',
+      timestamp: dt.timestamp,
+      dateOnly: dt.dateOnly,
+      sortTime: dt.sortTime,
+      detailLink: '/admin/crud'
+    })
   }
 
   for (const u of getAllStoredUsers()) {
@@ -274,7 +320,8 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
       categoryLabel: 'Pendaftaran Akun',
       title: `Akun ${roleLabel} Terdaftar: ${u.name}`,
       actor: u.name,
-      actorContact: [u.username ? `@${u.username}` : null, u.email, u.phone].filter(Boolean).join(' • '),
+      actorPhone: resolvePhone(u.phone, u.name, u.email),
+      actorContact: [u.username ? `@${u.username}` : null, u.email].filter(Boolean).join(' • '),
       referenceCode: u.id,
       description: `Asal: ${u.origin || 'Indonesia'} • Bergabung sejak ${u.memberSince}`,
       amount: null,
@@ -304,6 +351,7 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
       categoryLabel: 'Komunitas Buddy',
       title: `Ajakan Barengan: ${post.tripTitle}`,
       actor: post.authorName,
+      actorPhone: resolvePhone(null, post.authorName),
       actorContact: `Asal ${post.authorOrigin} • ${post.travelStyle}`,
       referenceCode: post.id.toUpperCase(),
       description: `"${post.note}" (Cari ${post.slotsLookingFor} teman • ${post.likes} minat gabung)`,
@@ -328,6 +376,7 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
       categoryLabel: 'Darurat SOS',
       title: `Sinyal SOS: ${alert.tripTitle}`,
       actor: alert.reporterName,
+      actorPhone: resolvePhone(null, alert.reporterName),
       actorContact: `${alert.locationLabel} (${alert.latitude}, ${alert.longitude})`,
       referenceCode: alert.id.toUpperCase(),
       description: alert.message,
@@ -355,6 +404,7 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
       categoryLabel: 'Verifikasi Pemandu',
       title: `Pengajuan Lisensi ${ver.licenseBody} — ${ver.guideName}`,
       actor: ver.guideName,
+      actorPhone: resolvePhone(null, ver.guideName, ver.email),
       actorContact: `${ver.email} • ${ver.origin}`,
       referenceCode: ver.licenseNumber,
       description: `${ver.documentTitle} (${ver.specialty}, ${ver.experienceYears} thn pengalaman)`,
@@ -378,6 +428,7 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
       categoryLabel: 'Refund Cuaca',
       title: `Pengajuan Refund: ${ref.tripTitle}`,
       actor: ref.customerName,
+      actorPhone: resolvePhone(null, ref.customerName),
       actorContact: `Berangkat ${ref.departureDate}`,
       referenceCode: ref.bookingCode,
       description: `${ref.weatherCondition} — ${ref.reason}`,
@@ -401,6 +452,7 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
       categoryLabel: 'Payout Pemandu',
       title: `Pencairan Dana Trip: ${pay.tripTitle}`,
       actor: pay.guideName,
+      actorPhone: resolvePhone(null, pay.guideName),
       actorContact: `${pay.participantsCount} peserta • Berangkat ${pay.departureDate}`,
       referenceCode: pay.id.toUpperCase(),
       description: `Bruto Rp ${pay.grossAmount.toLocaleString('id-ID')} • Komisi Platform Rp ${pay.platformCommission.toLocaleString('id-ID')} • Net Pemandu Rp ${pay.netPayout.toLocaleString('id-ID')}`,
@@ -423,6 +475,7 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
       categoryLabel: 'Chat Lobby',
       title: `Pesan Lobby Trip (${msg.tripSlug})`,
       actor: msg.senderName,
+      actorPhone: resolvePhone(null, msg.senderName),
       actorContact: msg.senderRole === 'guide' ? 'Pemandu Lokal' : 'Peserta',
       referenceCode: msg.id.toUpperCase(),
       description: msg.message,
@@ -434,6 +487,36 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
       sortTime: dt.sortTime,
       detailLink: '/admin/dashboard'
     })
+  }
+
+  // 8b. Pesan Bantuan Pelanggan ke Admin
+  try {
+    const supportThreads = await listSupportThreads()
+    for (const thread of supportThreads) {
+      if (thread.status === 'Menunggu Balasan') pendingQueueCount += 1
+      const dt = parseDateSafe(thread.updatedAt || thread.createdAt)
+      const latestMsg = thread.messages[thread.messages.length - 1]
+      activities.push({
+        id: `act-sup-${thread.id}`,
+        category: 'chat',
+        categoryLabel: 'Pesan ke Admin',
+        title: `Pesan Pelanggan (${thread.category}): ${thread.subject}`,
+        actor: thread.customerName,
+        actorPhone: resolvePhone(thread.customerPhone, thread.customerName, thread.customerEmail),
+        actorContact: thread.customerEmail,
+        referenceCode: thread.ticketCode,
+        description: latestMsg ? `${latestMsg.senderName}: "${latestMsg.message}"` : thread.subject,
+        amount: null,
+        status: thread.status,
+        severity: thread.status === 'Menunggu Balasan' ? 'warning' : thread.status === 'Selesai' ? 'success' : 'normal',
+        timestamp: dt.timestamp,
+        dateOnly: dt.dateOnly,
+        sortTime: dt.sortTime,
+        detailLink: '/admin/messages'
+      })
+    }
+  } catch {
+    // Support threads optional fallback
   }
 
   // 9. Log Audit Admin dari TiDB
@@ -449,6 +532,7 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
         categoryLabel: 'Audit Admin',
         title: `[${log.action}] ${log.resource}`,
         actor: log.actor,
+        actorPhone: resolvePhone(null, log.actor),
         actorContact: `Tabel ${log.resource}`,
         referenceCode: log.record_id,
         description: log.summary,
