@@ -85,6 +85,45 @@ const usersStore: StoredUser[] = [
     verified: true
   },
   {
+    id: 'usr-raka-demo',
+    username: 'raka',
+    name: 'Raka Mahendra',
+    email: 'raka.mahendra@mail.id',
+    phone: '0811-2201-9980',
+    passwordHash: hashPasswordSecure('raka123'),
+    role: 'customer',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=240&q=80',
+    origin: 'Bandung',
+    memberSince: '2025-06-15',
+    verified: true
+  },
+  {
+    id: 'usr-ayu-demo',
+    username: 'ayu',
+    name: 'Ayu Pratiwi',
+    email: 'ayu.pratiwi@mail.id',
+    phone: '0813-4455-6677',
+    passwordHash: hashPasswordSecure('ayu123'),
+    role: 'customer',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=240&q=80',
+    origin: 'Semarang',
+    memberSince: '2025-08-20',
+    verified: true
+  },
+  {
+    id: 'usr-kevin-demo',
+    username: 'kevin',
+    name: 'Kevin Santoso',
+    email: 'kevin.santoso@mail.id',
+    phone: '0815-7788-3344',
+    passwordHash: hashPasswordSecure('kevin123'),
+    role: 'customer',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=240&q=80',
+    origin: 'Surabaya',
+    memberSince: '2025-07-08',
+    verified: true
+  },
+  {
     id: 'guide-made-surya',
     username: 'made.surya',
     name: 'I Made Surya Pratama',
@@ -273,6 +312,73 @@ export function registerNewUser(input: {
 
   usersStore.push(newUser)
   return sanitizeUser(newUser)
+}
+
+// In-memory store for uploaded avatar data URLs (also persisted in TiDB users.avatar)
+const uploadedAvatarCache = new Map<string, string>()
+
+export function setUploadedAvatarData(userId: string, dataUrl: string) {
+  uploadedAvatarCache.set(userId, dataUrl)
+}
+
+export function getUploadedAvatarData(userId: string): string | null {
+  return uploadedAvatarCache.get(userId) ?? null
+}
+
+export function updateStoredUserProfile(
+  userId: string,
+  updates: {
+    name?: string
+    username?: string
+    email?: string
+    phone?: string
+    origin?: string
+    avatar?: string
+    newPassword?: string
+  },
+  fallbackUser?: AuthUser
+): AuthUser {
+  let found = usersStore.find((u) => u.id === userId)
+  if (!found && fallbackUser) {
+    found = {
+      ...fallbackUser,
+      passwordHash: hashPasswordSecure(randomBytes(24).toString('hex'))
+    }
+    usersStore.push(found)
+  }
+  if (!found) {
+    throw new Error('Akun pengguna tidak ditemukan.')
+  }
+
+  if (typeof updates.name === 'string' && updates.name.trim().length >= 2) {
+    found.name = updates.name.trim()
+  }
+  if (typeof updates.username === 'string' && updates.username.trim().length >= 3 && found.role !== 'admin') {
+    found.username = updates.username.trim().toLowerCase()
+  }
+  if (typeof updates.email === 'string' && updates.email.includes('@')) {
+    found.email = updates.email.trim().toLowerCase()
+  }
+  if (updates.phone !== undefined) {
+    found.phone = updates.phone.trim() || undefined
+  }
+  if (typeof updates.origin === 'string' && updates.origin.trim()) {
+    found.origin = updates.origin.trim()
+  }
+  if (typeof updates.avatar === 'string' && updates.avatar.trim()) {
+    found.avatar = updates.avatar.trim()
+  }
+  if (typeof updates.newPassword === 'string' && updates.newPassword.length >= 6) {
+    found.passwordHash = hashPasswordSecure(updates.newPassword)
+  }
+
+  return sanitizeUser(found)
+}
+
+export function verifyStoredUserPassword(userId: string, plainPassword: string): boolean {
+  const found = usersStore.find((u) => u.id === userId)
+  if (!found) return false
+  return verifyPasswordSecure(plainPassword, found.passwordHash)
 }
 
 export function updateStoredUserVerification(

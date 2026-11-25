@@ -94,6 +94,29 @@ export function useAuth() {
     }
   }
 
+  async function updateProfile(payload: {
+    name?: string
+    username?: string
+    email?: string
+    phone?: string
+    origin?: string
+    avatar?: string
+    currentPassword?: string
+    newPassword?: string
+  }): Promise<AuthResponse> {
+    loading.value = true
+    try {
+      const res = await $fetch<AuthResponse>('/api/auth/profile', {
+        method: 'PATCH',
+        body: payload
+      })
+      setSessionUser(res.user)
+      return res
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function logout() {
     loading.value = true
     try {
@@ -117,6 +140,7 @@ export function useAuth() {
     demoLogin,
     adminLogin,
     register,
+    updateProfile,
     logout
   }
 }

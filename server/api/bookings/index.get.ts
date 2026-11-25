@@ -9,10 +9,10 @@ export default defineEventHandler((event) => {
   const paymentStatus = typeof query.paymentStatus === 'string' ? query.paymentStatus.trim() : ''
   const guideOnly = query.guideOnly === 'true'
 
-  let list = [...customerBookingsStore]
+  let list = user ? [...customerBookingsStore] : []
 
   // STRICT PER-CUSTOMER ISOLATION:
-  // Pelanggan baru hanya melihat booking miliknya sendiri (0 jika belum pernah memesan!)
+  // Pelanggan hanya melihat booking miliknya sendiri (0 jika belum pernah memesan!)
   if (user?.role === 'customer') {
     const userId = user.id
     const userEmail = user.email.toLowerCase()

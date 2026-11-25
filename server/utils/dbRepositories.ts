@@ -211,6 +211,10 @@ interface UserRow extends RowDataPacket {
 }
 
 function mapUserRow(row: UserRow): AuthUser {
+  const safeAvatar =
+    row.avatar && row.avatar.startsWith('data:image/')
+      ? `/api/auth/avatar/${encodeURIComponent(row.id)}`
+      : row.avatar
   return {
     id: row.id,
     username: row.username || undefined,
@@ -218,7 +222,7 @@ function mapUserRow(row: UserRow): AuthUser {
     email: row.email,
     phone: row.phone || undefined,
     role: normalizeUserRole(row.role),
-    avatar: row.avatar,
+    avatar: safeAvatar,
     origin: row.origin,
     memberSince: row.member_since,
     verified: Boolean(row.verified)
@@ -253,6 +257,70 @@ export async function findUserByIdentifierFromDb(identifier: string): Promise<Us
 export async function findUserByIdFromDb(id: string): Promise<AuthUser | null> {
   const rows = await queryRows<UserRow>('SELECT * FROM users WHERE id = ? LIMIT 1', [id])
   return rows[0] ? mapUserRow(rows[0]) : null
+}
+
+export async function getUserAvatarFromDb(id: string): Promise<string | null> {
+  const rows = await queryRows<RowDataPacket>('SELECT avatar FROM users WHERE id = ? LIMIT 1', [id])
+  const val = rows[0]?.avatar
+  return typeof val === 'string' && val.length > 0 ? val : null
+}
+
+export async function verifyUserPasswordFromDb(id: string, plainPassword: string): Promise<boolean> {
+  const rows = await queryRows<UserRow>('SELECT password_hash FROM users WHERE id = ? LIMIT 1', [id])
+  const row = rows[0]
+  if (!row) return false
+  return verifyPasswordSecure(plainPassword, row.password_hash) || row.password_hash === hashPassword(plainPassword)
+}
+
+export async function updateUserProfileInDb(
+  id: string,
+  updates: {
+    name?: string
+    username?: string
+    email?: string
+    phone?: string | null
+    origin?: string
+    avatarData?: string
+    newPassword?: string
+  }
+): Promise<boolean> {
+  const fields: string[] = []
+  const params: SqlParam[] = []
+
+  if (updates.name !== undefined) {
+    fields.push('name = ?')
+    params.push(updates.name)
+  }
+  if (updates.username !== undefined) {
+    fields.push('username = ?')
+    params.push(updates.username)
+  }
+  if (updates.email !== undefined) {
+    fields.push('email = ?')
+    params.push(updates.email)
+  }
+  if (updates.phone !== undefined) {
+    fields.push('phone = ?')
+    params.push(updates.phone)
+  }
+  if (updates.origin !== undefined) {
+    fields.push('origin = ?')
+    params.push(updates.origin)
+  }
+  if (updates.avatarData !== undefined) {
+    fields.push('avatar = ?')
+    params.push(updates.avatarData)
+  }
+  if (updates.newPassword !== undefined) {
+    fields.push('password_hash = ?')
+    params.push(hashPasswordSecure(updates.newPassword))
+  }
+
+  if (!fields.length) return false
+  params.push(id)
+
+  const result = await executeSql(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`, params)
+  return result.affectedRows > 0
 }
 
 export async function authenticateUserFromDb(identifier: string, password: string): Promise<AuthUser | null> {

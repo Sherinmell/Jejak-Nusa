@@ -37,7 +37,7 @@ interface NavItem {
   label: string
   to: string
   description: string
-  icon: 'dashboard' | 'passport' | 'customers' | 'trips' | 'create' | 'bookings' | 'features' | 'verify' | 'payouts' | 'crud'
+  icon: 'dashboard' | 'passport' | 'customers' | 'trips' | 'create' | 'bookings' | 'features' | 'verify' | 'payouts' | 'crud' | 'profile'
 }
 
 const navItems = computed<NavItem[]>(() => {
@@ -79,6 +79,12 @@ const navItems = computed<NavItem[]>(() => {
         to: '/admin/crud',
         description: 'Kelola seluruh tabel data',
         icon: 'crud'
+      },
+      {
+        label: 'Edit Profil Saya',
+        to: '/profile',
+        description: 'Foto, nama & kata sandi',
+        icon: 'profile'
       }
     ]
   }
@@ -122,6 +128,12 @@ const navItems = computed<NavItem[]>(() => {
       to: '/customer/passport',
       description: 'Badges, poin & peta jejak',
       icon: 'passport'
+    },
+    {
+      label: 'Edit Profil Saya',
+      to: '/profile',
+      description: 'Foto, nama, WA & sandi',
+      icon: 'profile'
     }
   ]
 })
@@ -166,22 +178,26 @@ async function handleLogout() {
         </NuxtLink>
       </div>
 
-      <!-- Active User Card -->
+      <!-- Active User Card (Clickable to Edit Profile) -->
       <div v-if="user" class="px-5 pt-5">
-        <div class="rounded-2xl bg-white/10 border border-white/15 p-3.5 flex items-center gap-3">
+        <NuxtLink
+          to="/profile"
+          class="rounded-2xl bg-white/10 border border-white/15 p-3.5 flex items-center gap-3 hover:bg-white/18 transition group"
+          title="Klik untuk ubah profil"
+        >
           <img
             :src="user.avatar"
             :alt="user.name"
             class="h-11 w-11 rounded-xl object-cover border border-white/25 shrink-0"
           >
-          <div class="min-w-0">
-            <p class="text-sm font-extrabold text-white truncate">{{ user.name }}</p>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-extrabold text-white truncate group-hover:text-amber-200 transition">{{ user.name }}</p>
             <span class="mt-0.5 inline-flex items-center gap-1 rounded-full bg-amber-300/20 px-2 py-0.5 text-[10px] font-bold text-amber-200">
               <BadgeCheck class="h-3 w-3" />
-              {{ getRoleLabel(user.role) }}
+              {{ getRoleLabel(user.role) }} &bull; Ubah
             </span>
           </div>
-        </div>
+        </NuxtLink>
       </div>
 
       <!-- Navigation Links -->
@@ -209,6 +225,7 @@ async function handleLogout() {
           <PlusCircle v-else-if="item.icon === 'create'" class="h-4.5 w-4.5 shrink-0" />
           <ShieldCheck v-else-if="item.icon === 'verify'" class="h-4.5 w-4.5 shrink-0" />
           <Wallet v-else-if="item.icon === 'payouts'" class="h-4.5 w-4.5 shrink-0" />
+          <UserCheck v-else-if="item.icon === 'profile'" class="h-4.5 w-4.5 shrink-0" />
           <Database v-else class="h-4.5 w-4.5 shrink-0" />
           <div class="min-w-0">
             <span class="block text-xs font-extrabold leading-tight truncate">{{ item.label }}</span>

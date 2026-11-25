@@ -327,6 +327,13 @@ const pageHeading = computed(() => {
               <!-- Customer Menu -->
               <template v-if="isCustomer">
                 <NuxtLink
+                  to="/profile"
+                  class="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-[#354442] hover:bg-white hover:text-[#1f6f6d] transition"
+                >
+                  <User class="h-3.5 w-3.5" />
+                  Edit Profil Saya
+                </NuxtLink>
+                <NuxtLink
                   to="/customer/dashboard"
                   class="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-[#354442] hover:bg-white hover:text-[#1f6f6d] transition"
                 >
@@ -369,6 +376,13 @@ const pageHeading = computed(() => {
 
               <!-- Admin Menu -->
               <template v-else-if="isAdmin">
+                <NuxtLink
+                  to="/profile"
+                  class="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-[#354442] hover:bg-white hover:text-[#1f6f6d] transition"
+                >
+                  <User class="h-3.5 w-3.5" />
+                  Edit Profil Saya
+                </NuxtLink>
                 <NuxtLink
                   to="/admin/dashboard"
                   class="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-[#354442] hover:bg-white hover:text-[#1f6f6d] transition"
@@ -508,6 +522,15 @@ const pageHeading = computed(() => {
         </span>
       </NuxtLink>
 
+      <NuxtLink
+        :to="isAuthenticated ? '/profile' : '/login'"
+        class="shrink-0 flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[18px] px-3 py-2 text-[11px] font-semibold transition-all"
+        :class="route.path === '/profile' ? 'bg-[#1f6f6d] text-white shadow-md shadow-[#1f6f6d]/25' : 'glass-pill text-[#455351]'"
+      >
+        <User class="h-4 w-4" />
+        <span>{{ isAuthenticated ? 'Profil' : 'Login' }}</span>
+      </NuxtLink>
+
       <button
         type="button"
         class="shrink-0 flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[18px] bg-[#1f6f6d] px-3 py-2 text-[11px] font-semibold text-white shadow-md shadow-[#1f6f6d]/25 cursor-pointer"
@@ -625,12 +648,12 @@ const pageHeading = computed(() => {
               </span>
             </NuxtLink>
             <NuxtLink
-              to="/login"
+              :to="isAuthenticated ? '/profile' : '/login'"
               class="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-xs font-extrabold transition"
-              :class="isLoginView ? 'bg-white text-[#103f3e]' : 'text-teal-100 hover:bg-white/10'"
+              :class="route.path === '/profile' || isLoginView ? 'bg-white text-[#103f3e]' : 'text-teal-100 hover:bg-white/10'"
             >
               <User class="h-4.5 w-4.5" />
-              <span>{{ isAuthenticated ? 'Akun Saya' : 'Login' }}</span>
+              <span>{{ isAuthenticated ? 'Edit Profil Saya' : 'Login' }}</span>
             </NuxtLink>
           </nav>
 
@@ -805,12 +828,12 @@ const pageHeading = computed(() => {
       </NuxtLink>
 
       <NuxtLink
-        to="/login"
+        :to="isAuthenticated ? '/profile' : '/login'"
         class="shrink-0 flex w-[72px] flex-col items-center justify-center gap-1 rounded-[20px] py-2.5 text-[11px] font-semibold transition-all"
-        :class="isLoginView ? 'bg-[#1f6f6d] text-white shadow-lg shadow-[#1f6f6d]/30' : 'glass-pill text-[#455351] hover:text-[#1f6f6d] hover:bg-white'"
+        :class="route.path === '/profile' || isLoginView ? 'bg-[#1f6f6d] text-white shadow-lg shadow-[#1f6f6d]/30' : 'glass-pill text-[#455351] hover:text-[#1f6f6d] hover:bg-white'"
       >
         <User class="h-4.5 w-4.5" />
-        <span>{{ isAuthenticated ? 'Akun' : 'Login' }}</span>
+        <span>{{ isAuthenticated ? 'Profil' : 'Login' }}</span>
       </NuxtLink>
     </div>
 

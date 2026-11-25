@@ -1,81 +1,24 @@
 import { createError, defineEventHandler, readBody } from 'h3'
 import {
-  normalizeUserRole,
   type AuthResponse,
   type AuthUser,
   type LoginPayload
 } from '#shared/types/auth'
 import {
   authenticateUser,
-  getDemoUserByRole,
-  setAuthSession,
-  upsertCustomerByName
+  setAuthSession
 } from '../../utils/authStore'
 import { authenticateUserFromDb } from '../../utils/dbRepositories'
-import { executeSql, hashPassword } from '../../utils/db'
 
 export default defineEventHandler(async (event): Promise<AuthResponse> => {
   const body = await readBody<Partial<LoginPayload> & Record<string, unknown>>(event)
 
-  // MODE 0: 1-Klik Akun Demo Instan (Khusus Pelanggan; Pemandu & Admin wajib kredensial pribadi)
-  if (body?.mode === 'demo' && 'role' in body && typeof body.role === 'string') {
-    const targetRole = normalizeUserRole(body.role)
-    if (targetRole === 'admin' || targetRole === 'guide') {
-      throw createError({
-        statusCode: 403,
-        statusMessage:
-          targetRole === 'guide'
-            ? 'Login Pemandu wajib menggunakan Email / Nomor WhatsApp terdaftar dan kata sandi pribadi.'
-            : 'Login Admin wajib menggunakan username dan kata sandi resmi.'
-      })
-    }
-    const demoUser = getDemoUserByRole(targetRole)
-    setAuthSession(event, demoUser)
-
-    return {
-      user: demoUser,
-      message: `Login Demo berhasil (${demoUser.name}). Selamat datang di Dashboard Pelanggan JejakNusa.`
-    }
-  }
-
-  // MODE 1: Login Cepat Pelanggan dengan Nama
-  if (body?.mode === 'customer') {
-    const name = 'name' in body && typeof body.name === 'string' ? body.name.trim() : ''
-    const origin = 'origin' in body && typeof body.origin === 'string' ? body.origin.trim() : 'Indonesia'
-
-    if (name.length < 2) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Silakan masukkan nama pelanggan minimal 2 karakter.'
-      })
-    }
-
-    const user = upsertCustomerByName(name, origin)
-
-    try {
-      await executeSql(
-        `INSERT IGNORE INTO users
-          (id, name, email, password_hash, role, avatar, origin, member_since, verified, points, total_km_explored)
-         VALUES (?, ?, ?, ?, 'customer', ?, ?, ?, 1, 500, 0)`,
-        [
-          user.id,
-          user.name,
-          user.email,
-          hashPassword(user.id),
-          user.avatar,
-          user.origin,
-          user.memberSince
-        ]
-      )
-    } catch {
-      // Fallback already stored in signed session cookie & memory
-    }
-
-    setAuthSession(event, user)
-    return {
-      user,
-      message: `Selamat datang, ${user.name}! Anda masuk sebagai Pelanggan.`
-    }
+  // Tutup seluruh jalur login instan / tanpa password agar akun peserta & admin tetap privat
+  if (body?.mode === 'demo' || body?.mode === 'customer') {
+    throw createError({
+      statusCode: 403,
+      statusMessage: 'Login wajib menggunakan Username/Email/WhatsApp dan Kata Sandi akun terdaftar.'
+    })
   }
 
   // MODE 2: Login Pemandu dinonaktifkan (hanya Peserta & Admin)

@@ -355,6 +355,9 @@ async function runSchemaAndSeed(): Promise<void> {
   await pool
     .query(`ALTER TABLE users ADD COLUMN phone VARCHAR(40) DEFAULT NULL`)
     .catch(() => {})
+  await pool
+    .query(`ALTER TABLE users MODIFY COLUMN avatar MEDIUMTEXT`)
+    .catch(() => {})
 
   if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
     await pool.execute(
