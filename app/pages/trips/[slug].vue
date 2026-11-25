@@ -24,10 +24,12 @@ import {
 import { resolveTripRequirements, type Trip } from '#shared/types/trip'
 import type { HotelsApiResponse } from '#shared/types/hotel'
 import {
+  buildImageSrcSet,
   formatDateID,
   formatRupiah,
   getAdrenalineBadgeClass,
-  getAdrenalineDotClass
+  getAdrenalineDotClass,
+  optimizeImageUrl
 } from '~/utils/format'
 
 const route = useRoute()
@@ -186,11 +188,15 @@ useSeoMeta({
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
           <div class="lg:col-span-9 relative aspect-[16/9] sm:aspect-[16/10] overflow-hidden rounded-[24px] bg-[#144746]">
             <img
-              :src="activeImage"
+              :src="optimizeImageUrl(activeImage, 960, 75)"
+              :srcset="buildImageSrcSet(activeImage, [480, 800, 1200], 75)"
+              sizes="(max-width: 1024px) 94vw, 880px"
               :alt="trip.title"
+              decoding="async"
+              fetchpriority="high"
               class="h-full w-full object-cover transition-all duration-300"
             >
-            <div class="absolute bottom-3.5 right-3.5 rounded-full bg-black/60 backdrop-blur-sm px-3 py-1 text-xs font-bold text-white">
+            <div class="absolute bottom-3.5 right-3.5 rounded-full bg-black/70 px-3 py-1 text-xs font-bold text-white">
               Foto {{ activeImageIndex + 1 }} / {{ trip.gallery.length }}
             </div>
           </div>
@@ -208,7 +214,13 @@ useSeoMeta({
               "
               @click="activeImageIndex = idx"
             >
-              <img :src="img" :alt="`${trip.title} galeri ${idx + 1}`" class="h-full w-full object-cover">
+              <img
+                :src="optimizeImageUrl(img, 240, 68)"
+                :alt="`${trip.title} galeri ${idx + 1}`"
+                loading="lazy"
+                decoding="async"
+                class="h-full w-full object-cover"
+              >
             </button>
           </div>
         </div>

@@ -105,6 +105,17 @@ export async function ensureDatabaseReady(): Promise<void> {
 async function runSchemaAndSeed(): Promise<void> {
   const cfg = getDbConfig()
 
+  // Fast-path probe for Vercel / serverless cold starts:
+  // If database + latest table (support_threads) + users.phone already exist, skip 30+ DDL/seed roundtrips!
+  try {
+    const fastPool = getTidbPool()
+    await fastPool.query('SELECT id FROM support_threads LIMIT 1')
+    await fastPool.query('SELECT phone FROM users LIMIT 1')
+    return
+  } catch {
+    // Database or latest tables not initialized yet — run full idempotent bootstrap below
+  }
+
   // Step 1: Ensure database exists using bootstrap connection (without fixed database)
   const bootstrapConn = await mysql.createConnection({
     host: cfg.host,

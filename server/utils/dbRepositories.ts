@@ -78,17 +78,32 @@ function mapTripRow(row: TripRow): Trip {
   }
 }
 
+// Lightweight 30s in-memory catalog cache to cut repeated TiDB roundtrips on mobile navigation
+const CATALOG_CACHE_TTL_MS = 30_000
+let tripsCache: { data: Trip[]; expiresAt: number } | null = null
+let hotelsCache: { data: Hotel[]; expiresAt: number } | null = null
+
 export async function getAllTripsFromDb(): Promise<Trip[]> {
+  if (tripsCache && Date.now() < tripsCache.expiresAt) {
+    return tripsCache.data
+  }
   const rows = await queryRows<TripRow>('SELECT * FROM trips ORDER BY featured DESC, created_at DESC')
-  return rows.map(mapTripRow)
+  const mapped = rows.map(mapTripRow)
+  tripsCache = { data: mapped, expiresAt: Date.now() + CATALOG_CACHE_TTL_MS }
+  return mapped
 }
 
 export async function getTripBySlugFromDb(slug: string): Promise<Trip | null> {
+  if (tripsCache && Date.now() < tripsCache.expiresAt) {
+    const hit = tripsCache.data.find((t) => t.slug === slug)
+    if (hit) return hit
+  }
   const rows = await queryRows<TripRow>('SELECT * FROM trips WHERE slug = ? LIMIT 1', [slug])
   return rows[0] ? mapTripRow(rows[0]) : null
 }
 
 export async function insertTripToDb(trip: Trip): Promise<void> {
+  tripsCache = null
   const dataJson = JSON.stringify({
     gallery: trip.gallery,
     highlights: trip.highlights,
@@ -184,11 +199,20 @@ function mapHotelRow(row: HotelRow): Hotel {
 }
 
 export async function getAllHotelsFromDb(): Promise<Hotel[]> {
+  if (hotelsCache && Date.now() < hotelsCache.expiresAt) {
+    return hotelsCache.data
+  }
   const rows = await queryRows<HotelRow>('SELECT * FROM hotels ORDER BY featured DESC, rating DESC')
-  return rows.map(mapHotelRow)
+  const mapped = rows.map(mapHotelRow)
+  hotelsCache = { data: mapped, expiresAt: Date.now() + CATALOG_CACHE_TTL_MS }
+  return mapped
 }
 
 export async function getHotelBySlugFromDb(slug: string): Promise<Hotel | null> {
+  if (hotelsCache && Date.now() < hotelsCache.expiresAt) {
+    const hit = hotelsCache.data.find((h) => h.slug === slug)
+    if (hit) return hit
+  }
   const rows = await queryRows<HotelRow>('SELECT * FROM hotels WHERE slug = ? LIMIT 1', [slug])
   return rows[0] ? mapHotelRow(rows[0]) : null
 }

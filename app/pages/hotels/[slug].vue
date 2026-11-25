@@ -16,7 +16,7 @@ import {
   Users
 } from 'lucide-vue-next'
 import type { Hotel } from '#shared/types/hotel'
-import { formatRupiah } from '~/utils/format'
+import { buildImageSrcSet, formatRupiah, optimizeImageUrl } from '~/utils/format'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug || ''))
@@ -119,8 +119,16 @@ useSeoMeta({
         <!-- Photo Gallery -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
           <div class="lg:col-span-9 relative aspect-[16/9] sm:aspect-[16/10] overflow-hidden rounded-[24px] bg-[#144746]">
-            <img :src="activeImage" :alt="hotel.name" class="h-full w-full object-cover">
-            <div class="absolute bottom-3.5 right-3.5 rounded-full bg-black/60 backdrop-blur-sm px-3 py-1 text-xs font-bold text-white">
+            <img
+              :src="optimizeImageUrl(activeImage, 960, 75)"
+              :srcset="buildImageSrcSet(activeImage, [480, 800, 1200], 75)"
+              sizes="(max-width: 1024px) 94vw, 880px"
+              :alt="hotel.name"
+              decoding="async"
+              fetchpriority="high"
+              class="h-full w-full object-cover"
+            >
+            <div class="absolute bottom-3.5 right-3.5 rounded-full bg-black/70 px-3 py-1 text-xs font-bold text-white">
               Foto {{ activeImageIndex + 1 }} / {{ hotel.gallery.length }}
             </div>
           </div>
@@ -138,7 +146,13 @@ useSeoMeta({
               "
               @click="activeImageIndex = idx"
             >
-              <img :src="img" :alt="`${hotel.name} foto ${idx + 1}`" class="h-full w-full object-cover">
+              <img
+                :src="optimizeImageUrl(img, 240, 68)"
+                :alt="`${hotel.name} foto ${idx + 1}`"
+                loading="lazy"
+                decoding="async"
+                class="h-full w-full object-cover"
+              >
             </button>
           </div>
         </div>
