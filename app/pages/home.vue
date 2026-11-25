@@ -142,7 +142,7 @@ function handleSearchSubmit() {
 <template>
   <div class="space-y-6">
     <!-- Scenic Tropical Dashboard Canvas (Inspired by Reference Layout) -->
-    <section class="relative rounded-[34px] overflow-hidden pb-14 sm:pb-16">
+    <section class="relative rounded-[26px] sm:rounded-[34px] overflow-hidden pb-6 sm:pb-16">
       <!-- Atmospheric Scenic Backdrop fading into Warm Cream -->
       <div class="absolute inset-0 pointer-events-none">
         <img
@@ -161,9 +161,9 @@ function handleSearchSubmit() {
       </div>
 
       <!-- Main Bento Grid -->
-      <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-5 p-3 sm:p-5 lg:p-6">
+      <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 p-3 sm:p-5 lg:p-6">
         <!-- LEFT/CENTER COLUMN: Featured Destination Card + Scenic Space + Quick Search Bar -->
-        <div class="lg:col-span-7 flex flex-col justify-between gap-6">
+        <div class="lg:col-span-7 flex flex-col justify-between gap-4 sm:gap-6 min-w-0">
           <!-- Featured Destination Floating Card -->
           <div
             v-if="activeFeaturedTrip"
@@ -223,7 +223,7 @@ function handleSearchSubmit() {
                   class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-300 px-4 py-2.5 text-xs font-extrabold text-amber-900 hover:bg-amber-100 transition cursor-pointer"
                   @click="showMatchmakerModal = true"
                 >
-                  ✨ Adventure Matchmaker
+                  Adventure Matchmaker
                 </button>
 
                 <div class="flex items-center gap-1">
@@ -265,38 +265,38 @@ function handleSearchSubmit() {
           </div>
 
           <!-- Scenic Breathing Area + Quick Search Bar (Lokasi, Kategori, Tanggal) -->
-          <div class="pt-16 sm:pt-28 lg:pt-36 space-y-4">
+          <div class="pt-2 sm:pt-20 lg:pt-36 space-y-3 sm:space-y-4 min-w-0">
             <!-- Signature Adventure Sign Badge -->
-            <div class="inline-flex items-center gap-2.5 rounded-2xl bg-[#102625]/70 backdrop-blur-md border border-white/25 px-4 py-2.5 text-white shadow-lg">
+            <div class="w-full sm:w-auto inline-flex items-center gap-2.5 rounded-2xl bg-[#102625]/78 backdrop-blur-md border border-white/20 px-3.5 py-2.5 text-white shadow-lg">
               <Compass class="h-4 w-4 text-amber-300 shrink-0" />
-              <div class="text-xs leading-tight">
-                <span class="font-editorial font-bold tracking-wide text-amber-200">NUSANTARA OPEN TRIP</span>
+              <div class="min-w-0 text-xs leading-snug">
+                <span class="block font-editorial font-bold tracking-wide text-amber-200">NUSANTARA OPEN TRIP</span>
                 <span class="block text-[11px] text-white/85">Good Vibes, Bigger Adventures &bull; 100% Pemandu Terverifikasi</span>
               </div>
             </div>
 
             <!-- Functional Quick Search Bar (Lokasi / Kategori / Tanggal) -->
             <form
-              class="rounded-[26px] glass-surface p-3 sm:p-3.5"
+              class="rounded-[24px] sm:rounded-[26px] glass-surface p-3 sm:p-3.5 overflow-hidden"
               @submit.prevent="handleSearchSubmit"
             >
               <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
-                <div class="sm:col-span-4 relative">
+                <div class="sm:col-span-4 relative min-w-0 w-full">
                   <MapPin class="h-4 w-4 text-[#1f6f6d] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     v-model="searchLocation"
                     type="text"
                     placeholder="Destinasi (Bali, Rinjani...)"
                     aria-label="Lokasi atau destinasi"
-                    class="w-full rounded-full border border-[#e3dccd] bg-white/95 pl-9 pr-3 py-2.5 text-xs sm:text-sm font-medium text-[#1c2423] placeholder:text-[#8c9795] focus:border-[#1f6f6d] focus:outline-none"
+                    class="block h-11 w-full min-w-0 max-w-full rounded-full border border-[#e3dccd] bg-white/95 pl-9 pr-3.5 text-xs sm:text-sm font-medium text-[#1c2423] placeholder:text-[#8c9795] focus:border-[#1f6f6d] focus:outline-none"
                   >
                 </div>
 
-                <div class="sm:col-span-3">
+                <div class="sm:col-span-3 min-w-0 w-full">
                   <select
                     v-model="searchCategory"
                     aria-label="Kategori aktivitas"
-                    class="w-full rounded-full border border-[#e3dccd] bg-white/95 px-3.5 py-2.5 text-xs sm:text-sm font-medium text-[#1c2423] focus:border-[#1f6f6d] focus:outline-none cursor-pointer"
+                    class="block h-11 w-full min-w-0 max-w-full rounded-full border border-[#e3dccd] bg-white/95 px-3.5 text-xs sm:text-sm font-medium text-[#1c2423] focus:border-[#1f6f6d] focus:outline-none cursor-pointer"
                   >
                     <option value="">Semua Kategori</option>
                     <option v-for="cat in TRIP_CATEGORIES" :key="cat" :value="cat">
@@ -305,21 +305,22 @@ function handleSearchSubmit() {
                   </select>
                 </div>
 
-                <div class="sm:col-span-3">
+                <div class="sm:col-span-3 relative min-w-0 w-full overflow-hidden rounded-full">
+                  <Calendar class="h-4 w-4 text-[#1f6f6d] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
                   <input
                     v-model="searchDate"
                     type="date"
                     aria-label="Tanggal keberangkatan"
-                    class="w-full rounded-full border border-[#e3dccd] bg-white/95 px-3.5 py-2.5 text-xs sm:text-sm font-medium text-[#1c2423] focus:border-[#1f6f6d] focus:outline-none"
+                    class="block h-11 w-full min-w-0 max-w-full appearance-none rounded-full border border-[#e3dccd] bg-white/95 pl-9 pr-3.5 text-xs sm:text-sm font-medium text-[#1c2423] focus:border-[#1f6f6d] focus:outline-none"
                   >
                 </div>
 
-                <div class="sm:col-span-2">
+                <div class="sm:col-span-2 min-w-0 w-full">
                   <button
                     type="submit"
-                    class="w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[#1f6f6d] px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#175957] transition cursor-pointer"
+                    class="h-11 w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[#1f6f6d] px-4 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-[#175957] transition cursor-pointer"
                   >
-                    <Search class="h-4 w-4" />
+                    <Search class="h-4 w-4 shrink-0" />
                     Cari
                   </button>
                 </div>
@@ -329,9 +330,9 @@ function handleSearchSubmit() {
         </div>
 
         <!-- RIGHT COLUMN: Weather Widget + Island Map + Upcoming Trip -->
-        <div class="lg:col-span-5 flex flex-col gap-5">
+        <div class="lg:col-span-5 flex flex-col gap-4 sm:gap-5 min-w-0">
           <!-- 1. Teal Weather Card -->
-          <div class="teal-card rounded-[28px] p-5 text-white">
+          <div class="teal-card rounded-[24px] sm:rounded-[28px] p-4 sm:p-5 text-white overflow-hidden">
             <div class="flex items-start justify-between gap-3">
               <div class="flex items-center gap-3.5">
                 <span class="flex h-13 w-13 items-center justify-center rounded-2xl bg-white/12">

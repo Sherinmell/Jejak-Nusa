@@ -851,27 +851,27 @@ const pageHeading = computed(() => {
   <!-- Floating Bottom Navigation Dock -->
   <nav
     aria-label="Navigasi Bawah"
-    class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-[490px]"
+    class="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.5rem)] max-w-[490px]"
   >
-    <div class="relative flex items-center justify-between rounded-[28px] glass-pill px-5 sm:px-7 py-2.5">
+    <div class="relative flex items-center justify-between rounded-[26px] sm:rounded-[28px] glass-pill px-4 sm:px-7 py-2 sm:py-2.5">
       <NuxtLink
         to="/trips"
-        class="flex flex-col items-center gap-1 text-[11px] font-semibold transition"
+        class="flex flex-col items-center gap-0.5 sm:gap-1 text-[10px] sm:text-[11px] font-semibold transition"
         :class="isExploreView ? 'text-[#1f6f6d]' : 'text-[#5b6967] hover:text-[#1f6f6d]'"
       >
-        <span class="flex h-8 w-8 items-center justify-center rounded-full transition" :class="isExploreView ? 'bg-[#1f6f6d] text-white' : ''">
-          <Compass class="h-4.5 w-4.5" />
+        <span class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full transition" :class="isExploreView ? 'bg-[#1f6f6d] text-white' : ''">
+          <Compass class="h-4 w-4 sm:h-4.5 sm:w-4.5" />
         </span>
         <span>Explore</span>
       </NuxtLink>
 
       <NuxtLink
         to="/matchmaker"
-        class="flex flex-col items-center gap-1 text-[11px] font-semibold transition"
+        class="flex flex-col items-center gap-0.5 sm:gap-1 text-[10px] sm:text-[11px] font-semibold transition"
         :class="isMatchmakerView ? 'text-[#1f6f6d]' : 'text-[#5b6967] hover:text-[#1f6f6d]'"
       >
-        <span class="flex h-8 w-8 items-center justify-center rounded-full transition" :class="isMatchmakerView ? 'bg-[#1f6f6d] text-white' : ''">
-          <Wand2 class="h-4.5 w-4.5" />
+        <span class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full transition" :class="isMatchmakerView ? 'bg-[#1f6f6d] text-white' : ''">
+          <Wand2 class="h-4 w-4 sm:h-4.5 sm:w-4.5" />
         </span>
         <span>Quiz AI</span>
       </NuxtLink>
@@ -880,29 +880,29 @@ const pageHeading = computed(() => {
       <NuxtLink
         to="/home"
         aria-label="Beranda JejakNusa"
-        class="-mt-8 flex h-15 w-15 items-center justify-center rounded-full bg-[#1f6f6d] text-white shadow-xl shadow-[#1f6f6d]/35 ring-4 ring-[#f4f1ea] hover:bg-[#175957] hover:scale-105 transition"
+        class="-mt-6 sm:-mt-8 flex h-13 w-13 sm:h-15 sm:w-15 items-center justify-center rounded-full bg-[#1f6f6d] text-white shadow-xl shadow-[#1f6f6d]/35 ring-4 ring-[#f4f1ea] hover:bg-[#175957] hover:scale-105 transition shrink-0"
       >
-        <Send class="h-6 w-6 -translate-x-0.5 translate-y-0.5" />
+        <Send class="h-5 w-5 sm:h-6 sm:w-6 -translate-x-0.5 translate-y-0.5" />
       </NuxtLink>
 
       <NuxtLink
         :to="isAuthenticated ? roleHomePath : '/login'"
-        class="flex flex-col items-center gap-1 text-[11px] font-semibold transition"
+        class="flex flex-col items-center gap-0.5 sm:gap-1 text-[10px] sm:text-[11px] font-semibold transition"
         :class="isCustomerView || isGuideView || isAdminView ? 'text-[#1f6f6d]' : 'text-[#5b6967] hover:text-[#1f6f6d]'"
       >
-        <span class="flex h-8 w-8 items-center justify-center rounded-full transition" :class="isCustomerView || isGuideView || isAdminView ? 'bg-[#1f6f6d] text-white' : ''">
-          <LayoutDashboard class="h-4.5 w-4.5" />
+        <span class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full transition" :class="isCustomerView || isGuideView || isAdminView ? 'bg-[#1f6f6d] text-white' : ''">
+          <LayoutDashboard class="h-4 w-4 sm:h-4.5 sm:w-4.5" />
         </span>
         <span>{{ isAuthenticated ? 'Portal' : 'Masuk' }}</span>
       </NuxtLink>
 
       <NuxtLink
         to="/hotels"
-        class="flex flex-col items-center gap-1 text-[11px] font-semibold transition"
+        class="flex flex-col items-center gap-0.5 sm:gap-1 text-[10px] sm:text-[11px] font-semibold transition"
         :class="isHotelsView ? 'text-[#1f6f6d]' : 'text-[#5b6967] hover:text-[#1f6f6d]'"
       >
-        <span class="flex h-8 w-8 items-center justify-center rounded-full transition" :class="isHotelsView ? 'bg-[#1f6f6d] text-white' : ''">
-          <BedDouble class="h-4.5 w-4.5" />
+        <span class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full transition" :class="isHotelsView ? 'bg-[#1f6f6d] text-white' : ''">
+          <BedDouble class="h-4 w-4 sm:h-4.5 sm:w-4.5" />
         </span>
         <span>Hotels</span>
       </NuxtLink>
