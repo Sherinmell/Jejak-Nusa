@@ -54,3 +54,32 @@ export function getCategoryDescription(category: TripCategory): string {
       return 'Gua vertikal, karst purba & sungai bawah tanah'
   }
 }
+
+/**
+ * Rewrite Unsplash image URLs to lighter WebP dimensions for mobile speed.
+ * Non-Unsplash / local / data URLs are returned unchanged.
+ */
+export function optimizeImageUrl(url: string | undefined | null, width = 640, quality = 72): string {
+  if (!url) return ''
+  if (!url.includes('images.unsplash.com')) return url
+  try {
+    const parsed = new URL(url)
+    parsed.searchParams.set('auto', 'format')
+    parsed.searchParams.set('fit', 'crop')
+    parsed.searchParams.set('fm', 'webp')
+    parsed.searchParams.set('w', String(width))
+    parsed.searchParams.set('q', String(quality))
+    return parsed.toString()
+  } catch {
+    return url
+  }
+}
+
+export function buildImageSrcSet(
+  url: string | undefined | null,
+  widths: number[] = [400, 640, 960],
+  quality = 72
+): string | undefined {
+  if (!url || !url.includes('images.unsplash.com')) return undefined
+  return widths.map((w) => `${optimizeImageUrl(url, w, quality)} ${w}w`).join(', ')
+}

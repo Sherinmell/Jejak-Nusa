@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { BadgeCheck, Compass, MapPin, Star } from 'lucide-vue-next'
 import type { Hotel } from '#shared/types/hotel'
-import { formatRupiah } from '~/utils/format'
+import { buildImageSrcSet, formatRupiah, optimizeImageUrl } from '~/utils/format'
 
 interface Props {
   hotel: Hotel
@@ -13,26 +13,29 @@ defineProps<Props>()
 <template>
   <NuxtLink
     :to="`/hotels/${hotel.slug}`"
-    class="group flex flex-col overflow-hidden rounded-[24px] bg-[#fbf9f5] border border-white/90 shadow-[0_12px_30px_-14px_rgba(16,63,62,0.16)] hover:shadow-[0_22px_40px_-16px_rgba(16,63,62,0.24)] hover:-translate-y-1 transition-all duration-300"
+    class="perf-card group flex flex-col overflow-hidden rounded-[24px] bg-[#fbf9f5] border border-white/90 shadow-[0_8px_20px_-14px_rgba(16,63,62,0.16)] sm:hover:shadow-[0_22px_40px_-16px_rgba(16,63,62,0.24)] sm:hover:-translate-y-1 transition-all duration-300"
   >
     <!-- Rounded Thumbnail -->
     <div class="p-2.5 pb-0">
       <div class="relative aspect-[4/3] w-full overflow-hidden rounded-[18px] bg-[#144746]">
         <img
-          :src="hotel.coverImage"
+          :src="optimizeImageUrl(hotel.coverImage, 640, 72)"
+          :srcset="buildImageSrcSet(hotel.coverImage, [380, 640, 900], 72)"
+          sizes="(max-width: 640px) 92vw, (max-width: 1024px) 46vw, 320px"
           :alt="hotel.name"
           loading="lazy"
-          class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+          decoding="async"
+          class="h-full w-full object-cover sm:group-hover:scale-105 transition-transform duration-500"
         >
         <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
 
         <!-- Top Badges -->
         <div class="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2">
-          <span class="rounded-full bg-[#1f6f6d]/90 backdrop-blur-sm px-2.5 py-0.5 text-[11px] font-bold text-white">
+          <span class="rounded-full bg-[#1f6f6d] px-2.5 py-0.5 text-[11px] font-bold text-white">
             {{ hotel.type }}
           </span>
 
-          <span class="inline-flex items-center gap-1 rounded-full bg-black/55 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-bold text-white">
+          <span class="inline-flex items-center gap-1 rounded-full bg-black/65 px-2.5 py-0.5 text-[11px] font-bold text-white">
             <Star class="h-3 w-3 fill-amber-400 text-amber-400" />
             {{ hotel.rating.toFixed(1) }}
           </span>
@@ -41,7 +44,7 @@ defineProps<Props>()
         <!-- Bottom Proximity Pill -->
         <div class="absolute bottom-2.5 left-2.5 right-2.5">
           <span
-            class="inline-flex items-center gap-1.5 max-w-full rounded-full bg-white/92 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-[#162221]"
+            class="inline-flex items-center gap-1.5 max-w-full rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-bold text-[#162221]"
           >
             <Compass class="h-3 w-3 text-[#1f6f6d] shrink-0" />
             <span class="truncate">{{ hotel.distanceToBasecamp }}</span>

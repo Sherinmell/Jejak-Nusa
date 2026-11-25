@@ -358,7 +358,7 @@ async function handleLogout() {
     <!-- Main Dashboard Content Area -->
     <div class="flex-1 lg:pl-72 print:pl-0 min-w-0 flex flex-col">
       <!-- Top Bar -->
-      <header class="sticky top-0 z-30 print:hidden bg-[#f4f1ea]/90 backdrop-blur-md border-b border-[#e5dfd2] px-4 sm:px-6 lg:px-8 py-3.5">
+      <header class="sticky top-0 z-30 print:hidden bg-[#f4f1ea]/98 lg:bg-[#f4f1ea]/90 lg:backdrop-blur-md border-b border-[#e5dfd2] px-4 sm:px-6 lg:px-8 py-3.5">
         <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0">
             <button

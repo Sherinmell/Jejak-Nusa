@@ -125,8 +125,11 @@ async function handleLogout() {
       <!-- Left Editorial Panel -->
       <div class="lg:col-span-5 relative rounded-[32px] overflow-hidden min-h-[240px] lg:min-h-[480px] flex flex-col justify-between p-6 sm:p-8 text-white shadow-xl">
         <img
-          src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1200&q=80"
+          src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&fm=webp&w=720&q=70"
+          srcset="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&fm=webp&w=540&q=68 540w, https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&fm=webp&w=960&q=72 960w"
+          sizes="(max-width: 1024px) 95vw, 480px"
           alt="Petualangan Nusantara"
+          decoding="async"
           class="absolute inset-0 h-full w-full object-cover"
         >
         <div

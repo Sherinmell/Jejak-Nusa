@@ -16,7 +16,7 @@ import {
 } from 'lucide-vue-next'
 import { TRIP_CATEGORIES, type TripCategory, type TripsApiResponse } from '#shared/types/trip'
 import type { HotelsApiResponse } from '#shared/types/hotel'
-import { formatDateID } from '~/utils/format'
+import { buildImageSrcSet, formatDateID, optimizeImageUrl } from '~/utils/format'
 
 useSeoMeta({
   title: 'JejakNusa — Marketplace Open Trip & Pemandu Lokal Terverifikasi Indonesia',
@@ -31,10 +31,13 @@ const searchLocation = ref('')
 const searchCategory = ref<TripCategory | ''>('')
 const searchDate = ref('')
 
-const { data: allTripsData, pending: tripsPending } = await useFetch<TripsApiResponse>('/api/trips')
-const { data: featuredHotelsData, pending: hotelsPending } = await useFetch<HotelsApiResponse>('/api/hotels', {
-  query: { featured: 'true' }
-})
+const [{ data: allTripsData, pending: tripsPending }, { data: featuredHotelsData, pending: hotelsPending }] =
+  await Promise.all([
+    useFetch<TripsApiResponse>('/api/trips'),
+    useFetch<HotelsApiResponse>('/api/hotels', {
+      query: { featured: 'true' }
+    })
+  ])
 
 const allTrips = computed(() => allTripsData.value?.trips ?? [])
 const featuredTrips = computed(() => allTrips.value.filter((t) => t.featured).slice(0, 4))
@@ -169,9 +172,13 @@ function handleSearchSubmit() {
       <!-- Atmospheric Scenic Backdrop fading into Warm Cream -->
       <div class="absolute inset-0 pointer-events-none">
         <img
-          src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1800&q=85"
+          :src="optimizeImageUrl('https://images.unsplash.com/photo-1537996194471-e657df975ab4', 960, 72)"
+          :srcset="buildImageSrcSet('https://images.unsplash.com/photo-1537996194471-e657df975ab4', [540, 960, 1440], 72)"
+          sizes="(max-width: 640px) 100vw, 1440px"
           alt="Panorama Tebing Pantai Tropis Indonesia"
-          class="h-full w-full object-cover object-center scale-[1.01]"
+          decoding="async"
+          fetchpriority="high"
+          class="h-full w-full object-cover object-center"
         >
         <!-- Soft top & side cream merge like the reference design -->
         <div
@@ -273,13 +280,16 @@ function handleSearchSubmit() {
               class="sm:col-span-5 relative min-h-[195px] rounded-[22px] overflow-hidden group block"
             >
               <img
-                :src="activeFeaturedTrip.coverImage"
+                :src="optimizeImageUrl(activeFeaturedTrip.coverImage, 640, 72)"
+                :srcset="buildImageSrcSet(activeFeaturedTrip.coverImage, [400, 640, 960], 72)"
+                sizes="(max-width: 640px) 92vw, 360px"
                 :alt="activeFeaturedTrip.title"
-                class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                decoding="async"
+                class="h-full w-full object-cover sm:group-hover:scale-105 transition-transform duration-500"
               >
               <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
               <span
-                class="absolute bottom-2.5 left-2.5 right-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/92 backdrop-blur-sm px-3 py-1.5 text-[11px] font-bold text-[#162221] shadow-sm truncate"
+                class="absolute bottom-2.5 left-2.5 right-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-bold text-[#162221] shadow-sm truncate"
               >
                 <MapPin class="h-3.5 w-3.5 text-[#1f6f6d] shrink-0" />
                 <span class="truncate">{{ activeFeaturedTrip.location }}</span>
@@ -290,7 +300,7 @@ function handleSearchSubmit() {
           <!-- Scenic Breathing Area + Quick Search Bar (Lokasi, Kategori, Tanggal) -->
           <div class="pt-2 sm:pt-20 lg:pt-36 space-y-3 sm:space-y-4 min-w-0">
             <!-- Signature Adventure Sign Badge -->
-            <div class="w-full sm:w-auto inline-flex items-center gap-2.5 rounded-2xl bg-[#102625]/78 backdrop-blur-md border border-white/20 px-3.5 py-2.5 text-white shadow-lg">
+            <div class="w-full sm:w-auto inline-flex items-center gap-2.5 rounded-2xl bg-[#102625]/88 lg:bg-[#102625]/78 lg:backdrop-blur-md border border-white/20 px-3.5 py-2.5 text-white shadow-md">
               <Compass class="h-4 w-4 text-amber-300 shrink-0" />
               <div class="min-w-0 text-xs leading-snug">
                 <span class="block font-editorial font-bold tracking-wide text-amber-200">NUSANTARA OPEN TRIP</span>
@@ -474,8 +484,10 @@ function handleSearchSubmit() {
                 @click="selectedSpotId = 'bali'"
               >
                 <img
-                  src="https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&w=120&q=70"
+                  src="https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&fm=webp&w=96&q=65"
                   alt="Gitgit Bali"
+                  loading="lazy"
+                  decoding="async"
                   class="h-8 w-8 rounded-xl object-cover"
                 >
                 <span class="text-[11px] font-extrabold text-[#162221]">Gitgit, Bali</span>
@@ -488,8 +500,10 @@ function handleSearchSubmit() {
                 @click="selectedSpotId = 'lombok'"
               >
                 <img
-                  src="https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?auto=format&fit=crop&w=120&q=70"
+                  src="https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?auto=format&fit=crop&fm=webp&w=96&q=65"
                   alt="Gunung Rinjani"
+                  loading="lazy"
+                  decoding="async"
                   class="h-8 w-8 rounded-xl object-cover"
                 >
                 <span class="text-[11px] font-extrabold text-[#162221]">Rinjani</span>
@@ -502,8 +516,10 @@ function handleSearchSubmit() {
                 @click="selectedSpotId = 'komodo'"
               >
                 <img
-                  src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=120&q=70"
+                  src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&fm=webp&w=96&q=65"
                   alt="Komodo NTT"
+                  loading="lazy"
+                  decoding="async"
                   class="h-8 w-8 rounded-xl object-cover"
                 >
                 <span class="text-[11px] font-extrabold text-[#162221]">Komodo</span>
@@ -538,8 +554,10 @@ function handleSearchSubmit() {
               class="group flex items-center gap-3.5 rounded-2xl bg-white/90 p-2.5 border border-[#ece6d9] hover:border-[#1f6f6d]/40 transition"
             >
               <img
-                :src="upcomingTrip.coverImage"
+                :src="optimizeImageUrl(upcomingTrip.coverImage, 180, 70)"
                 :alt="upcomingTrip.title"
+                loading="lazy"
+                decoding="async"
                 class="h-18 w-18 rounded-2xl object-cover shrink-0"
               >
               <div class="flex-1 min-w-0">
