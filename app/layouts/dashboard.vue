@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Compass,
   Database,
+  FileBarChart2,
   Home,
   LayoutDashboard,
   LogOut,
@@ -37,7 +38,7 @@ interface NavItem {
   label: string
   to: string
   description: string
-  icon: 'dashboard' | 'passport' | 'customers' | 'trips' | 'create' | 'bookings' | 'features' | 'verify' | 'payouts' | 'crud' | 'profile'
+  icon: 'dashboard' | 'passport' | 'customers' | 'trips' | 'create' | 'bookings' | 'reports' | 'features' | 'verify' | 'payouts' | 'crud' | 'profile'
 }
 
 const navItems = computed<NavItem[]>(() => {
@@ -49,6 +50,12 @@ const navItems = computed<NavItem[]>(() => {
         to: '/admin/dashboard',
         description: 'Destinasi live, GMV & SOS',
         icon: 'dashboard'
+      },
+      {
+        label: 'Laporan Aktivitas',
+        to: '/admin/reports',
+        description: 'Rekap masuk, Ekspor PDF/Excel',
+        icon: 'reports'
       },
       {
         label: 'Transaksi & Booking',
@@ -220,6 +227,7 @@ async function handleLogout() {
           <Award v-else-if="item.icon === 'passport'" class="h-4.5 w-4.5 shrink-0" />
           <UserCheck v-else-if="item.icon === 'customers'" class="h-4.5 w-4.5 shrink-0" />
           <ClipboardList v-else-if="item.icon === 'bookings'" class="h-4.5 w-4.5 shrink-0" />
+          <FileBarChart2 v-else-if="item.icon === 'reports'" class="h-4.5 w-4.5 shrink-0" />
           <Sliders v-else-if="item.icon === 'features'" class="h-4.5 w-4.5 shrink-0" />
           <Briefcase v-else-if="item.icon === 'trips'" class="h-4.5 w-4.5 shrink-0" />
           <PlusCircle v-else-if="item.icon === 'create'" class="h-4.5 w-4.5 shrink-0" />

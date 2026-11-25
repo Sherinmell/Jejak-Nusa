@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Compass,
+  FileBarChart2,
   MapPin,
   Radio,
   ShieldCheck,
@@ -97,6 +98,13 @@ async function resolveSos(id: string) {
       </div>
 
       <div class="flex flex-wrap gap-2 shrink-0">
+        <NuxtLink
+          to="/admin/reports"
+          class="inline-flex items-center gap-1.5 rounded-full bg-amber-400 px-4 py-2.5 text-xs font-extrabold text-[#162221] hover:bg-amber-300 transition shadow-sm"
+        >
+          <FileBarChart2 class="h-4 w-4" />
+          Laporan Aktivitas (PDF/Excel)
+        </NuxtLink>
         <NuxtLink
           to="/admin/bookings"
           class="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2.5 text-xs font-extrabold text-[#103f3e] hover:bg-amber-50 transition"

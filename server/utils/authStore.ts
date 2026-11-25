@@ -231,6 +231,10 @@ export function findUserById(id: string): AuthUser | null {
   return user ? sanitizeUser(user) : null
 }
 
+export function getAllStoredUsers(): AuthUser[] {
+  return usersStore.map(sanitizeUser)
+}
+
 export function authenticateUser(
   identifier: string,
   password: string,
