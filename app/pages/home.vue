@@ -130,6 +130,29 @@ const upcomingTrip = computed(() => {
   return [...allTrips.value].sort((a, b) => a.nextDepartureDate.localeCompare(b.nextDepartureDate))[0]
 })
 
+const searchDateInputRef = ref<HTMLInputElement | null>(null)
+
+const formattedSearchDate = computed(() => {
+  if (!searchDate.value) return ''
+  const parts = searchDate.value.split('-')
+  if (parts.length !== 3) return searchDate.value
+  return `${parts[2]}/${parts[1]}/${parts[0]}`
+})
+
+function openSearchDatePicker() {
+  const el = searchDateInputRef.value
+  if (!el) return
+  if (typeof el.showPicker === 'function') {
+    try {
+      el.showPicker()
+      return
+    } catch {
+      // Fallback to native focus/click
+    }
+  }
+  el.focus()
+}
+
 function handleSearchSubmit() {
   const query: Record<string, string> = {}
   if (searchLocation.value.trim()) query.q = searchLocation.value.trim()
@@ -305,13 +328,23 @@ function handleSearchSubmit() {
                   </select>
                 </div>
 
-                <div class="sm:col-span-3 relative min-w-0 w-full overflow-hidden rounded-full">
-                  <Calendar class="h-4 w-4 text-[#1f6f6d] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
+                <div
+                  class="sm:col-span-3 relative min-w-0 w-full h-11 rounded-full border border-[#e3dccd] bg-white/95 focus-within:border-[#1f6f6d] overflow-hidden cursor-pointer flex items-center pl-9 pr-3.5"
+                  @click="openSearchDatePicker"
+                >
+                  <Calendar class="h-4 w-4 text-[#1f6f6d] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <span
+                    class="text-xs sm:text-sm font-medium truncate pointer-events-none select-none"
+                    :class="formattedSearchDate ? 'text-[#1c2423]' : 'text-[#8c9795]'"
+                  >
+                    {{ formattedSearchDate || 'dd/mm/yyyy' }}
+                  </span>
                   <input
+                    ref="searchDateInputRef"
                     v-model="searchDate"
                     type="date"
                     aria-label="Tanggal keberangkatan"
-                    class="block h-11 w-full min-w-0 max-w-full appearance-none rounded-full border border-[#e3dccd] bg-white/95 pl-9 pr-3.5 text-xs sm:text-sm font-medium text-[#1c2423] focus:border-[#1f6f6d] focus:outline-none"
+                    class="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
                   >
                 </div>
 
