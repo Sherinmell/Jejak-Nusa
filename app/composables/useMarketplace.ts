@@ -23,6 +23,7 @@ export function useMarketplace() {
 
   const bookings = useState<CustomerBookingRecord[]>('jejaknusa-bookings', () => [])
   const bookingsLoaded = useState<boolean>('jejaknusa-bookings-loaded', () => false)
+  const bookingsOwner = useState<string>('jejaknusa-bookings-owner', () => '')
 
   const trips = useState<Trip[]>('jejaknusa-trips', () => [])
 
@@ -54,7 +55,10 @@ export function useMarketplace() {
   }
 
   async function fetchBookings(force = false) {
-    if (bookingsLoaded.value && !force) return bookings.value
+    const activeUser = useState<{ id?: string } | null>('jejaknusa-auth-user', () => null)
+    const activeUserId = activeUser.value?.id || ''
+    const ownerChanged = bookingsOwner.value !== activeUserId
+    if (bookingsLoaded.value && !force && !ownerChanged) return bookings.value
     try {
       const fetcher = useRequestFetch()
       const res = await fetcher<{
@@ -64,13 +68,14 @@ export function useMarketplace() {
       if (res?.bookings) {
         bookings.value = res.bookings
         bookingsLoaded.value = true
+        bookingsOwner.value = activeUserId
       }
       if (res?.features) {
         features.value = { ...res.features }
         featuresLoaded.value = true
       }
     } catch {
-      // ignore
+      // Keep existing bookings intact on transient error
     }
     return bookings.value
   }

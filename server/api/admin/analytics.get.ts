@@ -1,31 +1,39 @@
 import { defineEventHandler } from 'h3'
 import { requireAdmin } from '../../utils/requireAdmin'
+import { guideManagedPackagesStore } from '../../utils/platformStore'
 import {
-  customerBookingsStore,
-  guideManagedPackagesStore,
-  guidePayoutsStore,
-  guideVerificationsStore,
-  platformFeaturesStore,
-  sosAlertsStore,
-  weatherRefundsStore
-} from '../../utils/platformStore'
+  loadAllBookings,
+  loadGuidePayouts,
+  loadGuideVerifications,
+  loadPlatformFeatures,
+  loadSosAlerts,
+  loadWeatherRefunds
+} from '../../utils/runtimePersistence'
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
 
-  const commissionRate = platformFeaturesStore.platformCommissionPercent / 100
-  const payoutGross = guidePayoutsStore.reduce((sum, p) => sum + p.grossAmount, 0)
-  const bookingGross = customerBookingsStore.reduce((sum, b) => sum + b.totalAmount, 0)
+  const [bookings, features, sosAlerts, verifications, payouts, weatherRefunds] = await Promise.all([
+    loadAllBookings(),
+    loadPlatformFeatures(),
+    loadSosAlerts(),
+    loadGuideVerifications(),
+    loadGuidePayouts(),
+    loadWeatherRefunds()
+  ])
+
+  const commissionRate = features.platformCommissionPercent / 100
+  const payoutGross = payouts.reduce((sum, p) => sum + p.grossAmount, 0)
+  const bookingGross = bookings.reduce((sum, b) => sum + b.totalAmount, 0)
   const totalGmv = payoutGross + bookingGross
   const platformCommission = Math.round(totalGmv * commissionRate)
-  const totalTransactions = customerBookingsStore.length
-  const totalBookedParticipants = customerBookingsStore.reduce((sum, b) => sum + b.participantsCount, 0)
-  const activeSosCount = sosAlertsStore.filter((s) => s.status === 'ACTIVE').length
-  const pendingVerifications = guideVerificationsStore.filter((v) => v.status === 'pending').length
-  const pendingPayouts = guidePayoutsStore.filter((p) => p.status === 'Menunggu Pencairan').length
-  const pendingRefunds = weatherRefundsStore.filter((r) => r.status === 'Menunggu Persetujuan').length
+  const totalTransactions = bookings.length
+  const totalBookedParticipants = bookings.reduce((sum, b) => sum + b.participantsCount, 0)
+  const activeSosCount = sosAlerts.filter((s) => s.status === 'ACTIVE').length
+  const pendingVerifications = verifications.filter((v) => v.status === 'pending').length
+  const pendingPayouts = payouts.filter((p) => p.status === 'Menunggu Pencairan').length
+  const pendingRefunds = weatherRefunds.filter((r) => r.status === 'Menunggu Persetujuan').length
 
-  // Real-time destination demand aggregation from customer bookings
   const destinationMap = new Map<
     string,
     {
@@ -40,7 +48,7 @@ export default defineEventHandler(async (event) => {
     }
   >()
 
-  for (const bk of customerBookingsStore) {
+  for (const bk of bookings) {
     const existing = destinationMap.get(bk.tripSlug)
     if (existing) {
       existing.bookingsCount += 1
@@ -69,7 +77,7 @@ export default defineEventHandler(async (event) => {
     metrics: {
       totalGmv,
       platformCommission,
-      commissionPercent: platformFeaturesStore.platformCommissionPercent,
+      commissionPercent: features.platformCommissionPercent,
       totalTransactions,
       totalBookedParticipants,
       activeTripsCount: guideManagedPackagesStore.length,
@@ -79,9 +87,9 @@ export default defineEventHandler(async (event) => {
       pendingRefunds
     },
     popularDestinations,
-    recentBookings: customerBookingsStore.slice(0, 8),
-    features: platformFeaturesStore,
-    sosAlerts: sosAlertsStore,
+    recentBookings: bookings.slice(0, 8),
+    features,
+    sosAlerts,
     liveTrips: guideManagedPackagesStore
   }
 })

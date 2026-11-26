@@ -306,6 +306,13 @@ export async function updateUserProfileInDb(
     origin?: string
     avatarData?: string
     newPassword?: string
+  },
+  fallbackInsert?: {
+    role: UserRole
+    memberSince: string
+    verified: boolean
+    avatar: string
+    passwordHash: string
   }
 ): Promise<boolean> {
   const fields: string[] = []
@@ -344,7 +351,46 @@ export async function updateUserProfileInDb(
   params.push(id)
 
   const result = await executeSql(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`, params)
-  return result.affectedRows > 0
+  if (result.affectedRows > 0) return true
+
+  // If built-in account row isn't in TiDB yet, insert it so edits & uploaded avatars persist forever!
+  if (fallbackInsert && updates.name && updates.email) {
+    const pwHash = updates.newPassword
+      ? hashPasswordSecure(updates.newPassword)
+      : fallbackInsert.passwordHash
+    const avatarVal = updates.avatarData || fallbackInsert.avatar
+    await executeSql(
+      `INSERT INTO users
+        (id, username, name, email, phone, password_hash, role, avatar, origin, member_since, verified, points, total_km_explored)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         username = VALUES(username),
+         name = VALUES(name),
+         email = VALUES(email),
+         phone = VALUES(phone),
+         password_hash = VALUES(password_hash),
+         avatar = VALUES(avatar),
+         origin = VALUES(origin)`,
+      [
+        id,
+        updates.username || null,
+        updates.name,
+        updates.email,
+        updates.phone ?? null,
+        pwHash,
+        fallbackInsert.role,
+        avatarVal,
+        updates.origin || 'Indonesia',
+        fallbackInsert.memberSince || new Date().toISOString().slice(0, 10),
+        fallbackInsert.verified ? 1 : 0,
+        0,
+        0
+      ]
+    )
+    return true
+  }
+
+  return false
 }
 
 export async function authenticateUserFromDb(identifier: string, password: string): Promise<AuthUser | null> {

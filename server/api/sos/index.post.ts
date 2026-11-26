@@ -1,7 +1,7 @@
 import { createError, defineEventHandler, readBody } from 'h3'
 import type { SosAlertRecord } from '#shared/types/booking'
 import { getAuthSessionUser } from '../../utils/authStore'
-import { sosAlertsStore } from '../../utils/platformStore'
+import { loadSosAlerts, saveSosAlerts } from '../../utils/runtimePersistence'
 
 export default defineEventHandler(async (event) => {
   const user = getAuthSessionUser(event)
@@ -48,6 +48,9 @@ export default defineEventHandler(async (event) => {
     createdAt: timestamp
   }
 
-  sosAlertsStore.unshift(alert)
+  const alerts = await loadSosAlerts()
+  alerts.unshift(alert)
+  await saveSosAlerts(alerts)
+
   return { ok: true, alert }
 })

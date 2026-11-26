@@ -39,8 +39,12 @@ useSeoMeta({
 const { user } = useAuth()
 
 const [{ data: bookingsData }, { data: passportData }] = await Promise.all([
-  useFetch<{ bookings: CustomerBookingRecord[] }>('/api/bookings'),
-  useFetch<PassportProfileResponse>('/api/passport')
+  useFetch<{ bookings: CustomerBookingRecord[] }>('/api/bookings', {
+    key: () => `cust-bookings-${user.value?.id || 'guest'}`
+  }),
+  useFetch<PassportProfileResponse>('/api/passport', {
+    key: () => `cust-passport-${user.value?.id || 'guest'}`
+  })
 ])
 
 const bookings = ref<CustomerBookingRecord[]>(

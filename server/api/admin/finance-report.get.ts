@@ -8,11 +8,11 @@ import type {
 } from '#shared/types/finance'
 import { queryRows } from '../../utils/db'
 import {
-  customerBookingsStore,
-  guidePayoutsStore,
-  platformFeaturesStore,
-  weatherRefundsStore
-} from '../../utils/platformStore'
+  loadAllBookings,
+  loadGuidePayouts,
+  loadPlatformFeatures,
+  loadWeatherRefunds
+} from '../../utils/runtimePersistence'
 import { requireAdmin } from '../../utils/requireAdmin'
 
 interface DbBookingFinanceRow extends RowDataPacket {
@@ -82,6 +82,14 @@ function bookingSeverity(paymentStatus: string, bookingStatus: string): FinanceS
 
 export default defineEventHandler(async (event): Promise<AdminFinanceReportResponse> => {
   await requireAdmin(event)
+
+  const [customerBookingsStore, guidePayoutsStore, platformFeaturesStore, weatherRefundsStore] =
+    await Promise.all([
+      loadAllBookings(),
+      loadGuidePayouts(),
+      loadPlatformFeatures(),
+      loadWeatherRefunds()
+    ])
 
   const commissionPercent = platformFeaturesStore.platformCommissionPercent
   const commissionRate = commissionPercent / 100

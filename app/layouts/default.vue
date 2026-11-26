@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ShieldCheck } from 'lucide-vue-next'
+
+const { isAdmin } = useAuth()
 </script>
 
 <template>
@@ -35,7 +37,8 @@ import { ShieldCheck } from 'lucide-vue-next'
           <NuxtLink to="/matchmaker" class="hover:text-[#1f6f6d] transition">Quiz AI</NuxtLink>
           <NuxtLink to="/customer/passport" class="hover:text-[#1f6f6d] transition">Passport</NuxtLink>
           <NuxtLink to="/community" class="hover:text-[#1f6f6d] transition">Komunitas</NuxtLink>
-          <NuxtLink to="/admin/dashboard" class="font-bold text-[#1f6f6d] hover:underline transition">Admin Center</NuxtLink>
+          <NuxtLink v-if="!isAdmin" to="/customer/support" class="hover:text-[#1f6f6d] transition">Hubungi Admin</NuxtLink>
+          <NuxtLink v-if="isAdmin" to="/admin/dashboard" class="font-bold text-[#1f6f6d] hover:underline transition">Admin Center</NuxtLink>
           <span class="text-[#8a9592]">&copy; {{ new Date().getFullYear() }} JejakNusa</span>
         </div>
       </footer>

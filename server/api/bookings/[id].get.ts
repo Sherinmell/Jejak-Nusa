@@ -1,8 +1,8 @@
 import { createError, defineEventHandler, getRouterParam } from 'h3'
 import { getAuthSessionUser } from '../../utils/authStore'
-import { customerBookingsStore, platformFeaturesStore } from '../../utils/platformStore'
+import { findBookingRecord, loadPlatformFeatures } from '../../utils/runtimePersistence'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const user = getAuthSessionUser(event)
   if (!user) {
     throw createError({
@@ -12,9 +12,10 @@ export default defineEventHandler((event) => {
   }
 
   const id = getRouterParam(event, 'id')
-  const found = customerBookingsStore.find(
-    (b) => b.id === id || b.invoiceNumber === id || b.bookingCode === id
-  )
+  const [found, features] = await Promise.all([
+    id ? findBookingRecord(id) : Promise.resolve(null),
+    loadPlatformFeatures()
+  ])
 
   if (!found) {
     throw createError({
@@ -38,6 +39,6 @@ export default defineEventHandler((event) => {
 
   return {
     booking: found,
-    features: platformFeaturesStore
+    features
   }
 })

@@ -12,15 +12,15 @@ import { createAdminRecord } from '../../utils/adminCrud'
 import { getAuthSessionUser } from '../../utils/authStore'
 import { HOTELS_DATA } from '../../utils/hotelsData'
 import {
-  customerBookingsStore,
   getMergedCatalogTrips,
-  guideManagedPackagesStore,
-  platformFeaturesStore
+  guideManagedPackagesStore
 } from '../../utils/platformStore'
+import { loadPlatformFeatures, saveBookingRecord } from '../../utils/runtimePersistence'
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody<Partial<CreateCheckoutBookingPayload> & Record<string, unknown>>(event)) || {}
   const sessionUser = getAuthSessionUser(event)
+  const platformFeaturesStore = await loadPlatformFeatures()
 
   const requestedType = body.bookingType as BookingType | undefined
   const hotelSlug = typeof body.hotelSlug === 'string' ? body.hotelSlug.trim() : ''
@@ -146,7 +146,7 @@ export default defineEventHandler(async (event) => {
       paidAt: markPaid ? timestamp : undefined
     }
 
-    customerBookingsStore.unshift(hotelRecord)
+    await saveBookingRecord(hotelRecord)
 
     return {
       ok: true,
@@ -334,7 +334,7 @@ export default defineEventHandler(async (event) => {
     paidAt: markPaid ? timestamp : undefined
   }
 
-  customerBookingsStore.unshift(bookingRecord)
+  await saveBookingRecord(bookingRecord)
 
   if (managed && markPaid) {
     managed.bookedCount = Math.min(managed.totalQuota, managed.bookedCount + participantsCount)

@@ -1,13 +1,14 @@
 import { defineEventHandler, getQuery } from 'h3'
-import { tripLobbyMessagesStore } from '../../utils/platformStore'
+import { loadLobbyMessages } from '../../utils/runtimePersistence'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const tripSlug = typeof query.tripSlug === 'string' ? query.tripSlug.trim() : ''
+  const allMessages = await loadLobbyMessages()
 
   const messages = tripSlug
-    ? tripLobbyMessagesStore.filter((m) => m.tripSlug === tripSlug)
-    : tripLobbyMessagesStore
+    ? allMessages.filter((m) => m.tripSlug === tripSlug)
+    : allMessages
 
   return { messages }
 })

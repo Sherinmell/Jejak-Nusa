@@ -1,15 +1,20 @@
 import { defineEventHandler, getQuery } from 'h3'
 import { getAuthSessionUser } from '../../utils/authStore'
-import { customerBookingsStore, platformFeaturesStore } from '../../utils/platformStore'
+import { loadAllBookings, loadPlatformFeatures } from '../../utils/runtimePersistence'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const user = getAuthSessionUser(event)
   const query = getQuery(event)
   const tripSlug = typeof query.tripSlug === 'string' ? query.tripSlug.trim() : ''
   const paymentStatus = typeof query.paymentStatus === 'string' ? query.paymentStatus.trim() : ''
   const guideOnly = query.guideOnly === 'true'
 
-  let list = user ? [...customerBookingsStore] : []
+  const [allBookings, features] = await Promise.all([
+    user ? loadAllBookings() : Promise.resolve([]),
+    loadPlatformFeatures()
+  ])
+
+  let list = [...allBookings]
 
   // STRICT PER-CUSTOMER ISOLATION:
   // Pelanggan hanya melihat booking miliknya sendiri (0 jika belum pernah memesan!)
@@ -48,6 +53,6 @@ export default defineEventHandler((event) => {
     user: user ? { id: user.id, name: user.name, role: user.role } : null,
     bookings: list,
     total: list.length,
-    features: platformFeaturesStore
+    features
   }
 })

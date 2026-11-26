@@ -12,13 +12,13 @@ import { communityPostsStore } from '../../utils/communityStore'
 import { queryRows } from '../../utils/db'
 import { getCommunityPostsFromDb } from '../../utils/dbRepositories'
 import {
-  customerBookingsStore,
-  guidePayoutsStore,
-  guideVerificationsStore,
-  sosAlertsStore,
-  tripLobbyMessagesStore,
-  weatherRefundsStore
-} from '../../utils/platformStore'
+  loadAllBookings,
+  loadGuidePayouts,
+  loadGuideVerifications,
+  loadLobbyMessages,
+  loadSosAlerts,
+  loadWeatherRefunds
+} from '../../utils/runtimePersistence'
 import { listSupportThreads } from '../../utils/supportStore'
 import { requireAdmin } from '../../utils/requireAdmin'
 
@@ -163,6 +163,22 @@ export default defineEventHandler(async (event): Promise<AdminActivitiesResponse
     }
     return '-'
   }
+
+  const [
+    customerBookingsStore,
+    sosAlertsStore,
+    guideVerificationsStore,
+    weatherRefundsStore,
+    guidePayoutsStore,
+    tripLobbyMessagesStore
+  ] = await Promise.all([
+    loadAllBookings(),
+    loadSosAlerts(),
+    loadGuideVerifications(),
+    loadWeatherRefunds(),
+    loadGuidePayouts(),
+    loadLobbyMessages()
+  ])
 
   for (const u of getAllStoredUsers()) {
     registerPhone(u.name, u.email, u.phone)

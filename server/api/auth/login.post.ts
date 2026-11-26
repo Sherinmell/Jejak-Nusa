@@ -48,13 +48,15 @@ export default defineEventHandler(async (event): Promise<AuthResponse> => {
     })
   }
 
-  let user: AuthUser | null = authenticateUser(identifier, password)
+  // Check TiDB Cloud users FIRST so profile edits & updated passwords always persist across restarts/serverless
+  let user: AuthUser | null = null
+  try {
+    user = await authenticateUserFromDb(identifier, password)
+  } catch {
+    user = null
+  }
   if (!user) {
-    try {
-      user = await authenticateUserFromDb(identifier, password)
-    } catch {
-      user = null
-    }
+    user = authenticateUser(identifier, password)
   }
 
   if (!user) {

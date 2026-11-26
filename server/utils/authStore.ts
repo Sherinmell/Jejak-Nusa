@@ -385,6 +385,11 @@ export function verifyStoredUserPassword(userId: string, plainPassword: string):
   return verifyPasswordSecure(plainPassword, found.passwordHash)
 }
 
+export function getStoredUserPasswordHash(userId: string): string | null {
+  const found = usersStore.find((u) => u.id === userId)
+  return found?.passwordHash ?? null
+}
+
 export function updateStoredUserVerification(
   guideId: string,
   status: 'verified' | 'rejected',

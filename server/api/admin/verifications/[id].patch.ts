@@ -1,14 +1,15 @@
 import { createError, defineEventHandler, getRouterParam, readBody } from 'h3'
 import { requireAdmin } from '../../../utils/requireAdmin'
 import { updateStoredUserVerification } from '../../../utils/authStore'
-import { guideVerificationsStore } from '../../../utils/platformStore'
+import { loadGuideVerifications, saveGuideVerifications } from '../../../utils/runtimePersistence'
 
 export default defineEventHandler(async (event) => {
   const admin = await requireAdmin(event)
   const id = getRouterParam(event, 'id')
   const body = await readBody<{ decision?: 'approved' | 'rejected'; reviewNote?: string }>(event)
 
-  const target = guideVerificationsStore.find((v) => v.id === id)
+  const list = await loadGuideVerifications()
+  const target = list.find((v) => v.id === id)
   if (!target) {
     throw createError({
       statusCode: 404,
@@ -36,5 +37,6 @@ export default defineEventHandler(async (event) => {
     body.decision === 'approved' ? `${target.licenseBody} Terverifikasi (${target.licenseNumber})` : undefined
   )
 
+  await saveGuideVerifications(list)
   return { ok: true, application: target }
 })

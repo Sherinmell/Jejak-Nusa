@@ -3,6 +3,7 @@ import type { AuthResponse } from '#shared/types/auth'
 import {
   findUserByIdentifier,
   getAuthSessionUser,
+  getStoredUserPasswordHash,
   setAuthSession,
   setUploadedAvatarData,
   updateStoredUserProfile,
@@ -155,19 +156,32 @@ export default defineEventHandler(async (event): Promise<AuthResponse> => {
     sessionUser
   )
 
-  // Persist to TiDB Cloud
+  // Persist to TiDB Cloud (with automatic upsert for built-in accounts)
   try {
-    await updateUserProfileInDb(sessionUser.id, {
-      name: updatedUser.name,
-      username: updatedUser.username,
-      email: updatedUser.email,
-      phone: updatedUser.phone || null,
-      origin: updatedUser.origin,
-      avatarData: dbAvatarPayload,
-      newPassword: passwordToSave
-    })
+    const fallbackPwHash = getStoredUserPasswordHash(sessionUser.id)
+    await updateUserProfileInDb(
+      sessionUser.id,
+      {
+        name: updatedUser.name,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        phone: updatedUser.phone || null,
+        origin: updatedUser.origin,
+        avatarData: dbAvatarPayload,
+        newPassword: passwordToSave
+      },
+      fallbackPwHash
+        ? {
+            role: updatedUser.role,
+            memberSince: updatedUser.memberSince,
+            verified: updatedUser.verified,
+            avatar: updatedUser.avatar,
+            passwordHash: fallbackPwHash
+          }
+        : undefined
+    )
   } catch {
-    // Non-blocking fallback when DB row is memory-only (e.g. built-in admin demo)
+    // Non-blocking fallback when TiDB is temporarily unreachable
   }
 
   setAuthSession(event, updatedUser)

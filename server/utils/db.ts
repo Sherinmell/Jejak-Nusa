@@ -106,14 +106,16 @@ async function runSchemaAndSeed(): Promise<void> {
   const cfg = getDbConfig()
 
   // Fast-path probe for Vercel / serverless cold starts:
-  // If database + latest table (support_threads) + users.phone already exist, skip 30+ DDL/seed roundtrips!
+  // If database + latest tables & columns already exist, skip 30+ DDL/seed roundtrips!
   try {
     const fastPool = getTidbPool()
+    await fastPool.query('SELECT state_key FROM app_runtime_state LIMIT 1')
+    await fastPool.query('SELECT record_json FROM customer_bookings LIMIT 1')
     await fastPool.query('SELECT id FROM support_threads LIMIT 1')
     await fastPool.query('SELECT phone FROM users LIMIT 1')
     return
   } catch {
-    // Database or latest tables not initialized yet — run full idempotent bootstrap below
+    // Database or latest tables/columns not initialized yet — run full idempotent bootstrap below
   }
 
   // Step 1: Ensure database exists using bootstrap connection (without fixed database)
@@ -343,6 +345,7 @@ async function runSchemaAndSeed(): Promise<void> {
       certificate_claimed TINYINT(1) NOT NULL DEFAULT 0,
       certificate_holder_name VARCHAR(160) DEFAULT NULL,
       completed_at VARCHAR(40) DEFAULT NULL,
+      record_json LONGTEXT DEFAULT NULL,
       created_at VARCHAR(40) NOT NULL
     )`,
     `CREATE TABLE IF NOT EXISTS support_threads (
@@ -359,12 +362,22 @@ async function runSchemaAndSeed(): Promise<void> {
       messages_json LONGTEXT NOT NULL,
       created_at VARCHAR(40) NOT NULL,
       updated_at VARCHAR(40) NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS app_runtime_state (
+      state_key VARCHAR(120) PRIMARY KEY,
+      data_json LONGTEXT NOT NULL,
+      updated_at VARCHAR(40) NOT NULL
     )`
   ]
 
   for (const ddl of ddlStatements) {
     await pool.query(ddl)
   }
+
+  // Ensure existing customer_bookings table has full record_json column for zero-loss serverless persistence
+  await pool
+    .query(`ALTER TABLE customer_bookings ADD COLUMN record_json LONGTEXT DEFAULT NULL`)
+    .catch(() => {})
 
   // Ensure existing users table supports 'customer' & 'admin' roles, username, phone, and wider scrypt password_hash
   await pool

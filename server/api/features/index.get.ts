@@ -1,8 +1,7 @@
 import { defineEventHandler } from 'h3'
-import { platformFeaturesStore } from '../../utils/platformStore'
+import { loadPlatformFeatures } from '../../utils/runtimePersistence'
 
-export default defineEventHandler(() => {
-  return {
-    features: platformFeaturesStore
-  }
+export default defineEventHandler(async () => {
+  const features = await loadPlatformFeatures()
+  return { features }
 })

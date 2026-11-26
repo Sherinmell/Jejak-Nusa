@@ -2,17 +2,20 @@ import { createError, defineEventHandler, getRouterParam, readBody } from 'h3'
 import { getAuthSessionUser } from '../../utils/authStore'
 import { awardTripCompletionToPassport } from '../../utils/passportStore'
 import {
-  customerBookingsStore,
   getMergedCatalogTrips,
   guideManagedPackagesStore
 } from '../../utils/platformStore'
+import {
+  findBookingRecord,
+  loadUserPassportState,
+  saveBookingRecord,
+  saveUserPassportState
+} from '../../utils/runtimePersistence'
 
 export default defineEventHandler(async (event) => {
   const user = getAuthSessionUser(event)
   const id = getRouterParam(event, 'id')
-  const found = customerBookingsStore.find(
-    (b) => b.id === id || b.invoiceNumber === id || b.bookingCode === id
-  )
+  const found = id ? await findBookingRecord(id) : null
 
   if (!found) {
     throw createError({
@@ -56,6 +59,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    await saveBookingRecord(found)
     return { ok: true, booking: found }
   }
 
@@ -67,6 +71,7 @@ export default defineEventHandler(async (event) => {
       })
     }
     found.checkedIn = typeof body.checkedIn === 'boolean' ? body.checkedIn : !found.checkedIn
+    await saveBookingRecord(found)
     return { ok: true, booking: found }
   }
 
@@ -109,6 +114,7 @@ export default defineEventHandler(async (event) => {
       found.certificateSentBy = undefined
       found.certificateAdminNote = undefined
     }
+    await saveBookingRecord(found)
     return { ok: true, booking: found }
   }
 
@@ -148,6 +154,7 @@ export default defineEventHandler(async (event) => {
         ? body.adminNote.trim()
         : 'Selamat! Kegiatan trip Anda telah dinyatakan selesai oleh Admin JejakNusa. Silakan klaim sertifikat resmi Anda.'
 
+    await saveBookingRecord(found)
     return { ok: true, booking: found }
   }
 
@@ -195,11 +202,15 @@ export default defineEventHandler(async (event) => {
       found.certificateClaimedAt = timestamp
       found.certificateHolderName = holderName
 
-      // Award Adventure Passport points, destination stamp & badges automatically!
+      // Load persisted passport state first so existing points/stamps are preserved!
+      const ownerId = found.customerId || user.id
+      const ownerEmail = found.customerEmail || user.email
+      const passportState = await loadUserPassportState(ownerId, ownerEmail)
+
       const matchedTrip = getMergedCatalogTrips().find((t) => t.slug === found.tripSlug)
       const rewardResult = awardTripCompletionToPassport({
-        userId: found.customerId || user.id,
-        email: found.customerEmail || user.email,
+        userId: ownerId,
+        email: ownerEmail,
         tripTitle: matchedTrip?.title || found.tripTitle,
         location: matchedTrip?.location || found.location,
         province: matchedTrip?.province || 'Indonesia',
@@ -209,6 +220,11 @@ export default defineEventHandler(async (event) => {
         completedDate: dateOnly
       })
 
+      await Promise.all([
+        saveBookingRecord(found),
+        saveUserPassportState(passportState, ownerId, ownerEmail)
+      ])
+
       return {
         ok: true,
         booking: found,
@@ -216,8 +232,8 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Allow updating display name if already claimed
     found.certificateHolderName = holderName
+    await saveBookingRecord(found)
     return {
       ok: true,
       booking: found,

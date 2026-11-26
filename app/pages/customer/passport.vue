@@ -27,8 +27,12 @@ useSeoMeta({
 const { user } = useAuth()
 
 const [{ data: passportData, refresh }, { data: bookingsData }] = await Promise.all([
-  useFetch<PassportProfileResponse>('/api/passport'),
-  useFetch<{ bookings: CustomerBookingRecord[] }>('/api/bookings')
+  useFetch<PassportProfileResponse>('/api/passport', {
+    key: () => `passport-page-${user.value?.id || 'guest'}`
+  }),
+  useFetch<{ bookings: CustomerBookingRecord[] }>('/api/bookings', {
+    key: () => `passport-bookings-${user.value?.id || 'guest'}`
+  })
 ])
 
 const eligibleTripBookings = computed(() =>

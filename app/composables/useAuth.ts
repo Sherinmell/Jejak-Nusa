@@ -31,9 +31,19 @@ export function useAuth() {
     const normalized = nextUser
       ? { ...nextUser, role: normalizeUserRole(nextUser.role) }
       : null
+    const prevId = user.value?.id ?? ''
+    const nextId = normalized?.id ?? ''
     user.value = normalized
     sessionCookie.value = normalized
     initialized.value = true
+
+    // Reset cached per-account bookings whenever the active user changes or logs out
+    if (prevId !== nextId) {
+      const bookingsLoaded = useState<boolean>('jejaknusa-bookings-loaded', () => false)
+      const bookingsOwner = useState<string>('jejaknusa-bookings-owner', () => '')
+      bookingsLoaded.value = false
+      bookingsOwner.value = ''
+    }
   }
 
   async function fetchUser(force = false) {
@@ -41,9 +51,14 @@ export function useAuth() {
     try {
       const fetcher = useRequestFetch()
       const res = await fetcher<{ user: AuthUser | null }>('/api/auth/me')
-      setSessionUser(res.user ?? null)
+      if (res && 'user' in res) {
+        setSessionUser(res.user ?? null)
+      }
     } catch {
-      setSessionUser(null)
+      // Preserve existing session state on transient network errors instead of wiping user data!
+      if (!user.value && sessionCookie.value) {
+        user.value = sessionCookie.value
+      }
     }
     return user.value
   }

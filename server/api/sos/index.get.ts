@@ -1,10 +1,11 @@
 import { defineEventHandler } from 'h3'
-import { sosAlertsStore } from '../../utils/platformStore'
+import { loadSosAlerts } from '../../utils/runtimePersistence'
 
-export default defineEventHandler(() => {
-  const activeCount = sosAlertsStore.filter((a) => a.status === 'ACTIVE').length
+export default defineEventHandler(async () => {
+  const alerts = await loadSosAlerts()
+  const activeCount = alerts.filter((a) => a.status === 'ACTIVE').length
   return {
     activeCount,
-    alerts: sosAlertsStore
+    alerts
   }
 })

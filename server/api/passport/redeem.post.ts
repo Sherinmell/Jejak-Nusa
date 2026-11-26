@@ -1,13 +1,13 @@
 import { createError, defineEventHandler, readBody } from 'h3'
 import { getAuthSessionUser } from '../../utils/authStore'
-import { getPassportStateForUser } from '../../utils/passportStore'
+import { loadUserPassportState, saveUserPassportState } from '../../utils/runtimePersistence'
 
 export default defineEventHandler(async (event) => {
   const sessionUser = getAuthSessionUser(event)
   const body = await readBody<{ rewardId?: string }>(event)
   const rewardId = typeof body?.rewardId === 'string' ? body.rewardId.trim() : ''
 
-  const state = getPassportStateForUser(sessionUser?.id, sessionUser?.email)
+  const state = await loadUserPassportState(sessionUser?.id, sessionUser?.email)
   const reward = state.rewards.find((r) => r.id === rewardId)
   if (!reward) {
     throw createError({ statusCode: 404, statusMessage: 'Hadiah loyalitas tidak ditemukan.' })
@@ -32,6 +32,8 @@ export default defineEventHandler(async (event) => {
   state.points -= reward.pointsCost
   const code = `JN-${reward.id.slice(-4).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`
   reward.redeemedCode = code
+
+  await saveUserPassportState(state, sessionUser?.id, sessionUser?.email)
 
   return {
     ok: true,

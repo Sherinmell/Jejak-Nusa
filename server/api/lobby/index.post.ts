@@ -1,7 +1,7 @@
 import { createError, defineEventHandler, readBody } from 'h3'
 import type { TripLobbyMessage } from '#shared/types/booking'
 import { getAuthSessionUser } from '../../utils/authStore'
-import { tripLobbyMessagesStore } from '../../utils/platformStore'
+import { loadLobbyMessages, saveLobbyMessages } from '../../utils/runtimePersistence'
 
 export default defineEventHandler(async (event) => {
   const user = getAuthSessionUser(event)
@@ -32,6 +32,9 @@ export default defineEventHandler(async (event) => {
     createdAt: timeStr
   }
 
-  tripLobbyMessagesStore.push(newMsg)
+  const list = await loadLobbyMessages()
+  list.push(newMsg)
+  await saveLobbyMessages(list)
+
   return { ok: true, message: newMsg }
 })

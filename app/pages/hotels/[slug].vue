@@ -74,7 +74,7 @@ useSeoMeta({
     <div v-else class="space-y-7">
       <!-- Breadcrumb -->
       <nav aria-label="Breadcrumb" class="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-[#667472]">
-        <NuxtLink to="/" class="hover:text-[#1f6f6d] transition">Beranda</NuxtLink>
+        <NuxtLink to="/home" class="hover:text-[#1f6f6d] transition">Beranda</NuxtLink>
         <ChevronRight class="h-3.5 w-3.5 text-[#9ba6a4]" />
         <NuxtLink to="/hotels" class="hover:text-[#1f6f6d] transition">Penginapan &amp; Hotel</NuxtLink>
         <ChevronRight class="h-3.5 w-3.5 text-[#9ba6a4]" />

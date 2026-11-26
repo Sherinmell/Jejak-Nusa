@@ -31,7 +31,9 @@ const { user } = useAuth()
 const { bookings, fetchBookings } = useMarketplace()
 await fetchBookings()
 
-const { data, pending, refresh } = await useFetch<SupportListResponse>('/api/support')
+const { data, pending, refresh } = await useFetch<SupportListResponse>('/api/support', {
+  key: () => `support-threads-${user.value?.id || 'guest'}`
+})
 const threads = computed(() => data.value?.threads ?? [])
 const counts = computed(() => data.value?.counts)
 
