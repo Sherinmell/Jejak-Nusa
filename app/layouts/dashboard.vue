@@ -61,18 +61,6 @@ const navItems = computed<NavItem[]>(() => {
         icon: 'messages'
       },
       {
-        label: 'Laporan Aktivitas',
-        to: '/admin/reports',
-        description: 'Rekap masuk, Ekspor PDF/Excel',
-        icon: 'reports'
-      },
-      {
-        label: 'Laporan Keuangan',
-        to: '/admin/finance-report',
-        description: 'Arus kas, Komisi, PDF/Excel',
-        icon: 'finance'
-      },
-      {
         label: 'Transaksi & Booking',
         to: '/admin/bookings',
         description: 'Verifikasi QRIS & Invoice',
@@ -101,6 +89,18 @@ const navItems = computed<NavItem[]>(() => {
         to: '/admin/crud',
         description: 'Kelola seluruh tabel data',
         icon: 'crud'
+      },
+      {
+        label: 'Laporan Aktivitas',
+        to: '/admin/reports',
+        description: 'Rekap masuk, Ekspor PDF/Excel',
+        icon: 'reports'
+      },
+      {
+        label: 'Laporan Keuangan',
+        to: '/admin/finance-report',
+        description: 'Arus kas, Komisi, PDF/Excel',
+        icon: 'finance'
       },
       {
         label: 'Edit Profil Saya',
